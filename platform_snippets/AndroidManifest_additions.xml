@@ -1,0 +1,18 @@
+<!--
+  Añade estas líneas dentro de android/app/src/main/AndroidManifest.xml,
+  como hijas directas de <manifest ...>, ANTES de la etiqueta <application>.
+  Ejemplo de estructura resultante:
+
+  <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+      <uses-permission android:name="android.permission.INTERNET" />
+      <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+      <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+      <application ...>
+          ...
+      </application>
+  </manifest>
+-->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

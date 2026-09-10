@@ -1,0 +1,8 @@
+<!--
+  Añade estas claves dentro de ios/Runner/Info.plist, como hijas directas
+  del <dict> principal (al mismo nivel que CFBundleName, etc).
+-->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Necesitamos tu ubicación para encontrar las gasolineras más cercanas y guiarte hasta ellas.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>Necesitamos tu ubicación para encontrar las gasolineras más cercanas y guiarte hasta ellas.</string>
