@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -25,7 +27,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _locationService = LocationService();
   final _favoritesService = FavoritesService();
   final _fuelService = FuelPriceService();
@@ -43,15 +45,41 @@ class _HomeScreenState extends State<HomeScreen> {
   /// (por id de gasolinera), para mostrar la tendencia ↑/↓.
   final Map<String, double?> _favoritePreviousPrices = {};
 
+  /// Comprueba los precios de las favoritas cada pocos minutos mientras la
+  /// app está abierta, además de al arrancar y al volver de segundo plano
+  /// (ver [didChangeAppLifecycleState]), para detectar cambios sin tener
+  /// que cerrar y volver a abrir la app.
+  Timer? _refreshTimer;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadFavorites();
+    _refreshTimer = Timer.periodic(
+      const Duration(minutes: 10),
+      (_) => _loadFavorites(silent: true, forceRefresh: true),
+    );
   }
 
-  Future<void> _loadFavorites() async {
-    setState(() => _loadingFavorites = true);
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadFavorites(silent: true, forceRefresh: true);
+    }
+  }
+
+  Future<void> _loadFavorites({bool silent = false, bool forceRefresh = false}) async {
+    if (!silent) setState(() => _loadingFavorites = true);
     try {
+      if (forceRefresh) _fuelService.refresh();
       final ids = await _favoritesService.getFavoriteIds();
       final stations = await _fuelService.findByIds(ids);
       if (!mounted) return;
@@ -68,9 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Registra el precio de hoy de cada favorita (para poder mostrar la
-  /// tendencia ↑/↓) y avisa con una notificación si alguna ha bajado desde
-  /// la última vez que se abrió la app.
+  /// Registra el precio actual de cada favorita (para poder mostrar la
+  /// tendencia ↑/↓) y avisa con una notificación si ha cambiado -subido o
+  /// bajado- desde la última vez que se comprobó.
   Future<void> _updatePriceHistoryAndAlerts(List<GasStation> stations) async {
     for (final station in stations) {
       final fuelType = station.availableFuelTypes.isNotEmpty
@@ -86,8 +114,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() => _favoritePreviousPrices[station.id] = previous);
       }
-      if (previous != null && price < previous - 0.001) {
-        await _priceAlertService.notifyPriceDrop(
+      if (previous != null && (price - previous).abs() >= 0.001) {
+        await _priceAlertService.notifyPriceChange(
           stationId: station.id,
           brand: station.brand,
           oldPrice: previous,

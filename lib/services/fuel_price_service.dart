@@ -55,6 +55,14 @@ class FuelPriceService {
     return stations;
   }
 
+  /// Fuerza que la próxima consulta vuelva a descargar los precios del
+  /// Ministerio en vez de usar la caché en memoria, para poder detectar
+  /// cambios de precio mientras la app sigue abierta.
+  void refresh() {
+    _cache = null;
+    _cachedAt = null;
+  }
+
   /// Gasolineras dentro de [radiusKm] de (lat, lng), con [GasStation.distanceKm]
   /// ya calculado. Si hay menos de [minResults], va doblando el radio (hasta
   /// [maxRadiusKm]) para que en zonas rurales no se quede la lista vacía.

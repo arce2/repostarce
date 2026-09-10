@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -57,10 +59,45 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// Si está activo, solo se muestran gasolineras abiertas 24 horas.
   bool _only24h = false;
 
+  /// Vuelve a pedir los precios cada pocos minutos mientras esta pantalla
+  /// está abierta, para reflejar cambios sin tener que salir y entrar de
+  /// nuevo. No toca el estado de carga/error ni los filtros elegidos, solo
+  /// la lista de gasolineras de base.
+  Timer? _refreshTimer;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _refreshTimer = Timer.periodic(
+      const Duration(minutes: 5),
+      (_) => _silentRefresh(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Igual que [_load] pero sin resetear filtros ni mostrar el spinner de
+  /// carga: se usa para el refresco periódico en segundo plano.
+  Future<void> _silentRefresh() async {
+    try {
+      _fuelService.refresh();
+      final stations = widget.origin != null
+          ? await _fuelService.findNearby(
+              lat: widget.origin!.latitude,
+              lng: widget.origin!.longitude,
+            )
+          : await _fuelService.findByProvince(widget.province!.id);
+      if (!mounted) return;
+      setState(() => _stations = stations);
+    } catch (_) {
+      // Fallo puntual de red: no interrumpimos al usuario con un error,
+      // se reintentará en el siguiente ciclo.
+    }
   }
 
   Future<void> _load() async {

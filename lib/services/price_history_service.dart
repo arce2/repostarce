@@ -23,10 +23,15 @@ class PriceHistoryService {
     }
   }
 
-  /// Registra el precio de hoy para esta gasolinera+combustible (si no se
-  /// había guardado ya hoy) y devuelve el precio del día distinto más
-  /// reciente anterior, o `null` si no hay histórico previo con el que
-  /// comparar.
+  /// Registra el precio actual para esta gasolinera+combustible y devuelve
+  /// el precio con el que se debe comparar (el último conocido antes de
+  /// esta llamada), o `null` si no hay histórico previo.
+  ///
+  /// Si ya se había registrado un precio hoy pero ha cambiado desde
+  /// entonces (p.ej. la gasolinera lo actualiza a media mañana y se vuelve
+  /// a comprobar por la tarde), se actualiza el registro de hoy en vez de
+  /// crear uno nuevo, para poder detectar cambios varias veces al día y no
+  /// solo una vez por jornada.
   Future<double?> recordAndGetPrevious(
     String stationId,
     FuelType type,
@@ -41,15 +46,17 @@ class PriceHistoryService {
     final today = DateTime.now();
     final todayKey = '${today.year}-${today.month}-${today.day}';
     final alreadyToday = history.isNotEmpty && history.last['d'] == todayKey;
+    final previous =
+        history.isNotEmpty ? (history.last['p'] as num).toDouble() : null;
 
-    final double? previous;
     if (alreadyToday) {
-      previous = history.length > 1
-          ? (history[history.length - 2]['p'] as num).toDouble()
-          : null;
+      if (previous != currentPrice) {
+        final updated = [...history];
+        updated[updated.length - 1] = {'d': todayKey, 'p': currentPrice};
+        all[key] = updated;
+        await prefs.setString(_prefsKey, jsonEncode(all));
+      }
     } else {
-      previous =
-          history.isNotEmpty ? (history.last['p'] as num).toDouble() : null;
       final updated = [...history, {'d': todayKey, 'p': currentPrice}];
       if (updated.length > _maxEntriesPerKey) {
         updated.removeAt(0);

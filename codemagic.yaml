@@ -1,0 +1,26 @@
+workflows:
+  ios-unsigned:
+    name: iOS sin firmar (para instalar con Sideloadly)
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Obtener dependencias de Flutter
+        script: flutter pub get
+      - name: Instalar pods de iOS
+        script: |
+          cd ios && pod install
+      - name: Compilar iOS en modo release sin firmar
+        script: flutter build ios --release --no-codesign
+      - name: Empaquetar como .ipa sin firmar
+        script: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+          cd build/ios/ipa
+          zip -r Repostarce-unsigned.ipa Payload
+          mv Repostarce-unsigned.ipa "$CM_BUILD_DIR/"
+    artifacts:
+      - Repostarce-unsigned.ipa
