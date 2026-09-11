@@ -49,3 +49,7 @@ app.*.map.json
 
 # Claude Code
 .claude/
+
+# Claves personales de proveedores de mapa/rutas de pago (ver el propio
+# archivo para instrucciones de cómo rellenarlo)
+lib/config/api_keys.dart
