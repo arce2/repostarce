@@ -14,6 +14,7 @@ import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
+import 'fuel_log_screen.dart';
 import 'navigation_screen.dart';
 import 'results_screen.dart';
 
@@ -192,7 +193,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Repostarce')),
+      appBar: AppBar(
+        title: const Text('Repostarce'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_rounded),
+            tooltip: 'Mis repostajes',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const FuelLogScreen(),
+            )),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
