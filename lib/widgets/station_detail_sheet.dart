@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
@@ -118,6 +119,66 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _navigating = false);
+    }
+  }
+
+  /// Al pulsar "Navegar hasta aquí" se deja elegir entre la navegación
+  /// propia de Repostarce (paso a paso, dentro de la app) o abrir la ruta
+  /// directamente en Google Maps.
+  Future<void> _showNavigationOptions() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '¿Cómo quieres llegar?',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.navigation_rounded, color: colorScheme.primary),
+              title: const Text('Navegación de Repostarce'),
+              subtitle: const Text('Paso a paso, sin salir de la app'),
+              onTap: () => Navigator.pop(context, 'app'),
+            ),
+            ListTile(
+              leading: Icon(Icons.map_rounded, color: colorScheme.primary),
+              title: const Text('Abrir en Google Maps'),
+              subtitle: const Text('Sales de Repostarce y usas tu app de mapas'),
+              onTap: () => Navigator.pop(context, 'maps'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted || choice == null) return;
+    if (choice == 'app') {
+      await _handleNavigate();
+    } else {
+      await _openInGoogleMaps();
+    }
+  }
+
+  Future<void> _openInGoogleMaps() async {
+    final station = widget.station;
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${station.latitude},${station.longitude}'
+      '&travelmode=driving',
+    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      setState(() => _error = 'No se ha podido abrir Google Maps.');
     }
   }
 
@@ -325,7 +386,7 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
               const SizedBox(height: 12),
             ],
             FilledButton.icon(
-              onPressed: _navigating ? null : _handleNavigate,
+              onPressed: _navigating ? null : _showNavigationOptions,
               icon: _navigating
                   ? SizedBox(
                       width: 18,
