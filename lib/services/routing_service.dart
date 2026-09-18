@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
+import '../config/api_keys.dart';
+
 /// Un paso de la ruta (un tramo entre dos maniobras) con su instrucción ya
-/// traducida al español.
+/// en español.
 class RouteStep {
   RouteStep({
     required this.maneuverLocation,
@@ -22,8 +24,8 @@ class RouteStep {
   final double distanceMeters;
   final double durationSeconds;
 
-  /// Tipo/modificador crudos de OSRM (p.ej. "turn" / "left"), pensados
-  /// para que la interfaz elija qué icono de flecha mostrar.
+  /// Tipo/modificador de maniobra (p.ej. "turn" / "left"), pensados para
+  /// que la interfaz elija qué icono de flecha mostrar.
   final String maneuverType;
   final String maneuverModifier;
 }
@@ -44,154 +46,143 @@ class RouteResult {
   final double totalDurationSeconds;
 }
 
-/// Calcula rutas de coche usando el servidor público de demostración de
-/// OSRM (Open Source Routing Machine) sobre datos de OpenStreetMap.
+/// Calcula rutas de coche usando la API de pago de OpenRouteService
+/// (openrouteservice.org), con plan gratuito que sobra para probar la app
+/// o un lanzamiento pequeño. Sustituye al servidor de demo de OSRM, que no
+/// está pensado para tráfico de producción real.
 ///
-/// IMPORTANTE: `router.project-osrm.org` es un servidor de DEMO gratuito,
-/// sin API key, pero pensado para pruebas ligeras (ver su fair-use policy).
-/// No tiene garantías de disponibilidad ni de límite de peticiones. Para
-/// una app en producción real habría que montar tu propio servidor OSRM
-/// (o usar un proveedor de pago tipo Mapbox/Google) — ver README.
+/// Necesita una API key propia en [ApiKeys.openRouteService] (ver
+/// lib/config/api_keys.dart para instrucciones de cómo conseguirla).
 class RoutingService {
-  static const _baseUrl = 'https://router.project-osrm.org/route/v1/driving';
+  static const _baseUrl =
+      'https://api.openrouteservice.org/v2/directions/driving-car/geojson';
 
   Future<RouteResult> getRoute({
     required LatLng origin,
     required LatLng destination,
   }) async {
-    final coords =
-        '${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}';
-    final uri = Uri.parse(
-      '$_baseUrl/$coords?overview=full&geometries=geojson&steps=true',
-    );
+    final uri = Uri.parse(_baseUrl);
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Authorization': ApiKeys.openRouteService,
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'coordinates': [
+              [origin.longitude, origin.latitude],
+              [destination.longitude, destination.latitude],
+            ],
+            'language': 'es',
+            'instructions': true,
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
 
-    final response = await http.get(uri).timeout(const Duration(seconds: 20));
     if (response.statusCode != 200) {
-      throw RoutingException(
-        'No se ha podido calcular la ruta (código ${response.statusCode}). '
-        'Inténtalo de nuevo.',
-      );
+      throw RoutingException(_errorMessageFor(response));
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (json['code'] != 'Ok' ||
-        (json['routes'] as List?)?.isNotEmpty != true) {
+    final features = json['features'] as List?;
+    if (features == null || features.isEmpty) {
       throw RoutingException(
         'No se ha encontrado una ruta en coche hasta esa gasolinera.',
       );
     }
 
-    final route = (json['routes'] as List).first as Map<String, dynamic>;
-    final geometry = route['geometry'] as Map<String, dynamic>;
+    final feature = features.first as Map<String, dynamic>;
+    final geometry = feature['geometry'] as Map<String, dynamic>;
     final coordinates = (geometry['coordinates'] as List)
         .map((c) => LatLng((c as List)[1] as double, c[0] as double))
         .toList();
 
-    final legs = route['legs'] as List;
-    final steps = <RouteStep>[];
-    for (final leg in legs) {
-      for (final rawStep in (leg as Map<String, dynamic>)['steps'] as List) {
-        final step = rawStep as Map<String, dynamic>;
-        final maneuver = step['maneuver'] as Map<String, dynamic>;
-        final location = maneuver['location'] as List;
-        final streetName = (step['name'] as String?)?.trim() ?? '';
+    final properties = feature['properties'] as Map<String, dynamic>;
+    final segment =
+        (properties['segments'] as List).first as Map<String, dynamic>;
 
-        steps.add(RouteStep(
-          maneuverLocation: LatLng(
-            (location[1] as num).toDouble(),
-            (location[0] as num).toDouble(),
-          ),
-          instruction: _instructionFor(maneuver, streetName),
-          streetName: streetName,
-          distanceMeters: (step['distance'] as num).toDouble(),
-          durationSeconds: (step['duration'] as num).toDouble(),
-          maneuverType: maneuver['type'] as String? ?? '',
-          maneuverModifier: maneuver['modifier'] as String? ?? '',
-        ));
-      }
+    final steps = <RouteStep>[];
+    for (final rawStep in segment['steps'] as List) {
+      final step = rawStep as Map<String, dynamic>;
+      final wayPoints = step['way_points'] as List;
+      final startIndex = (wayPoints.first as num).toInt();
+      final streetName = (step['name'] as String?)?.trim() ?? '';
+      final normalizedStreetName = streetName == '-' ? '' : streetName;
+      final maneuverModifier = _modifierFor(step['type'] as int? ?? -1);
+
+      steps.add(RouteStep(
+        maneuverLocation: coordinates[startIndex],
+        instruction: step['instruction'] as String? ?? 'Continúa',
+        streetName: normalizedStreetName,
+        distanceMeters: (step['distance'] as num).toDouble(),
+        durationSeconds: (step['duration'] as num).toDouble(),
+        maneuverType: (step['type'] as int? ?? -1).toString(),
+        maneuverModifier: maneuverModifier,
+      ));
     }
 
     return RouteResult(
       polyline: coordinates,
       steps: steps,
-      totalDistanceMeters: (route['distance'] as num).toDouble(),
-      totalDurationSeconds: (route['duration'] as num).toDouble(),
+      totalDistanceMeters: (segment['distance'] as num).toDouble(),
+      totalDurationSeconds: (segment['duration'] as num).toDouble(),
     );
   }
 
-  /// Traduce el tipo/modificador de maniobra de OSRM a una instrucción en
-  /// español. Vocabulario estándar de OSRM:
-  /// https://project-osrm.org/docs/v5.24.0/api/#stepmaneuver-object
-  String _instructionFor(Map<String, dynamic> maneuver, String streetName) {
-    final type = maneuver['type'] as String? ?? '';
-    final modifier = maneuver['modifier'] as String? ?? '';
-    final hacia = streetName.isNotEmpty ? ' hacia $streetName' : '';
-    final porCalle = streetName.isNotEmpty ? ' por $streetName' : '';
-
-    String turnPhrase() {
-      switch (modifier) {
-        case 'uturn':
-          return 'Haz un cambio de sentido';
-        case 'sharp left':
-          return 'Gira bruscamente a la izquierda$hacia';
-        case 'left':
-          return 'Gira a la izquierda$hacia';
-        case 'slight left':
-          return 'Gira ligeramente a la izquierda$hacia';
-        case 'straight':
-          return 'Sigue recto$porCalle';
-        case 'slight right':
-          return 'Gira ligeramente a la derecha$hacia';
-        case 'right':
-          return 'Gira a la derecha$hacia';
-        case 'sharp right':
-          return 'Gira bruscamente a la derecha$hacia';
-        default:
-          return 'Continúa$porCalle';
-      }
-    }
-
+  /// Traduce el código numérico de maniobra de OpenRouteService al mismo
+  /// vocabulario de modificadores que ya usaba la interfaz (para elegir el
+  /// ángulo de la flecha de navegación). Códigos documentados en
+  /// https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post
+  String _modifierFor(int type) {
     switch (type) {
-      case 'depart':
-        return streetName.isNotEmpty
-            ? 'Empieza en $streetName'
-            : 'Empieza la ruta';
-      case 'arrive':
-        return 'Has llegado a tu destino';
-      case 'turn':
-      case 'roundabout turn':
-        return turnPhrase();
-      case 'new name':
-      case 'continue':
-        return 'Continúa$porCalle';
-      case 'merge':
-        return 'Incorpórate$hacia';
-      case 'on ramp':
-        return 'Toma la salida$hacia';
-      case 'off ramp':
-        return 'Sal de la vía$hacia';
-      case 'fork':
-        return modifier.contains('left')
-            ? 'Mantente a la izquierda$hacia'
-            : 'Mantente a la derecha$hacia';
-      case 'end of road':
-        return modifier.contains('left')
-            ? 'Al final de la calle, gira a la izquierda$hacia'
-            : 'Al final de la calle, gira a la derecha$hacia';
-      case 'roundabout':
-      case 'rotary':
-        final exit = maneuver['exit'];
-        return exit != null
-            ? 'En la rotonda, toma la salida $exit$hacia'
-            : 'Entra en la rotonda$hacia';
-      case 'exit roundabout':
-      case 'exit rotary':
-        return 'Sal de la rotonda$hacia';
-      case 'use lane':
-        return 'Mantente en el carril$porCalle';
+      case 0:
+        return 'left';
+      case 1:
+        return 'right';
+      case 2:
+        return 'sharp left';
+      case 3:
+        return 'sharp right';
+      case 4:
+        return 'slight left';
+      case 5:
+        return 'slight right';
+      case 6:
+        return 'straight';
+      case 9:
+        return 'uturn';
+      case 12:
+        return 'slight left';
+      case 13:
+        return 'slight right';
       default:
-        return streetName.isNotEmpty ? 'Continúa$porCalle' : 'Continúa';
+        return 'straight';
     }
+  }
+
+  String _errorMessageFor(http.Response response) {
+    if (response.statusCode == 403) {
+      return 'La clave de OpenRouteService no es válida o no está '
+          'configurada (revisa lib/config/api_keys.dart).';
+    }
+    if (response.statusCode == 429) {
+      return 'Se ha superado el límite de peticiones de rutas por hoy. '
+          'Inténtalo más tarde.';
+    }
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final message = (json['error'] is Map)
+          ? (json['error'] as Map)['message']
+          : json['error'];
+      if (message is String && message.isNotEmpty) {
+        return 'No se ha podido calcular la ruta: $message';
+      }
+    } catch (_) {
+      // Cuerpo no era JSON con el formato esperado: usamos el mensaje genérico.
+    }
+    return 'No se ha podido calcular la ruta (código ${response.statusCode}). '
+        'Inténtalo de nuevo.';
   }
 }
 

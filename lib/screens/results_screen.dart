@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../config/api_keys.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../models/loyalty_card.dart';
@@ -510,8 +511,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.fuel_finder',
+                urlTemplate:
+                    'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${ApiKeys.mapTiler}',
+                userAgentPackageName: 'com.fuelfinder.fuel_finder',
+              ),
+              const RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution('MapTiler'),
+                  TextSourceAttribution('OpenStreetMap contributors'),
+                ],
               ),
               MarkerClusterLayerWidget(
                 options: MarkerClusterLayerOptions(
