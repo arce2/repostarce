@@ -5,16 +5,19 @@ import 'package:latlong2/latlong.dart';
 
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
+import '../models/loyalty_card.dart';
 import '../models/province.dart';
 import '../services/favorites_service.dart';
 import '../services/fuel_price_service.dart';
 import '../services/location_service.dart';
+import '../services/loyalty_card_service.dart';
 import '../services/price_alert_service.dart';
 import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
 import 'fuel_log_screen.dart';
+import 'loyalty_cards_screen.dart';
 import 'navigation_screen.dart';
 import 'results_screen.dart';
 
@@ -32,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _locationService = LocationService();
   final _favoritesService = FavoritesService();
   final _fuelService = FuelPriceService();
+  final _loyaltyCardService = LoyaltyCardService();
   final _priceHistoryService = PriceHistoryService();
   final _priceAlertService = PriceAlertService();
 
@@ -40,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _error;
 
   List<GasStation> _favoriteStations = [];
+  List<LoyaltyCard> _loyaltyCards = [];
   bool _loadingFavorites = true;
 
   /// Precio del día distinto más reciente registrado para cada favorita
@@ -57,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadFavorites();
+    _loadLoyaltyCards();
     _refreshTimer = Timer.periodic(
       const Duration(minutes: 10),
       (_) => _loadFavorites(silent: true, forceRefresh: true),
@@ -95,6 +101,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() => _loadingFavorites = false);
     }
+  }
+
+  Future<void> _loadLoyaltyCards() async {
+    final cards = await _loyaltyCardService.getCards();
+    if (mounted) setState(() => _loyaltyCards = cards);
   }
 
   /// Registra el precio actual de cada favorita (para poder mostrar la
@@ -184,8 +195,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         fuelService: _fuelService,
         onNavigate: () => _startNavigationTo(station),
         onViewStation: _openFavoriteDetails,
+        loyaltyCard: _loyaltyCardService.cardFor(station, _loyaltyCards),
       ),
     ).then((_) => _loadFavorites());
+  }
+
+  Future<void> _openLoyaltyCards() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const LoyaltyCardsScreen(),
+    ));
+    _loadLoyaltyCards();
   }
 
   @override
@@ -196,6 +215,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       appBar: AppBar(
         title: const Text('Repostarce'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.local_activity_rounded),
+            tooltip: 'Mis tarjetas de descuento',
+            onPressed: _openLoyaltyCards,
+          ),
           IconButton(
             icon: const Icon(Icons.receipt_long_rounded),
             tooltip: 'Mis repostajes',
@@ -307,6 +331,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               fuelType: fuelType,
                               isCheapest: false,
                               previousPrice: _favoritePreviousPrices[station.id],
+                              cardDiscountPerLiter: _loyaltyCardService
+                                  .cardFor(station, _loyaltyCards)
+                                  ?.discountPerLiter,
                               onTap: () => _openFavoriteDetails(station),
                             ),
                           );

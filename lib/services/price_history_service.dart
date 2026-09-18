@@ -66,4 +66,28 @@ class PriceHistoryService {
     }
     return previous;
   }
+
+  /// Devuelve el histórico completo guardado (hasta 30 días) de una
+  /// gasolinera+combustible, ordenado de más antiguo a más reciente, para
+  /// poder dibujar una gráfica de evolución de precio.
+  Future<List<MapEntry<DateTime, double>>> getSeries(
+    String stationId,
+    FuelType type,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final all = await _readAll(prefs);
+    final key = _keyFor(stationId, type);
+    final history =
+        ((all[key] as List<dynamic>?) ?? const []).cast<Map<String, dynamic>>();
+
+    return history.map((entry) {
+      final parts = (entry['d'] as String).split('-');
+      final date = DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+      );
+      return MapEntry(date, (entry['p'] as num).toDouble());
+    }).toList();
+  }
 }

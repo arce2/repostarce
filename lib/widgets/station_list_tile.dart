@@ -14,6 +14,7 @@ class StationListTile extends StatelessWidget {
     required this.isCheapest,
     this.isMostExpensive = false,
     this.previousPrice,
+    this.cardDiscountPerLiter,
     required this.onTap,
   });
 
@@ -26,6 +27,11 @@ class StationListTile extends StatelessWidget {
   /// mostrar si ha subido o bajado desde entonces. `null` si no hay
   /// histórico (p.ej. primera vez que se consulta esta gasolinera).
   final double? previousPrice;
+
+  /// Cuánto descuenta por litro la tarjeta de fidelización del usuario
+  /// para la marca de esta gasolinera, si tiene una. `null` si no aplica
+  /// ninguna.
+  final double? cardDiscountPerLiter;
   final VoidCallback onTap;
 
   @override
@@ -140,6 +146,16 @@ class StationListTile extends StatelessWidget {
                       color: highlighted ? accent : colorScheme.onSurface,
                     ),
                   ),
+                  if (price != null && cardDiscountPerLiter != null)
+                    Text(
+                      'con tarjeta: '
+                      '${(price - cardDiscountPerLiter! < 0 ? 0.0 : price - cardDiscountPerLiter!).toStringAsFixed(3)} €',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.primary,
+                      ),
+                    ),
                   if (trendDelta != null && trendDelta.abs() >= 0.001)
                     Row(
                       mainAxisSize: MainAxisSize.min,

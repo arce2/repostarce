@@ -3,9 +3,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
+import '../models/loyalty_card.dart';
 import '../services/favorites_service.dart';
 import '../services/fuel_price_service.dart';
+import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
+import 'price_trend_chart.dart';
 
 /// Litros que se asumen para calcular el ahorro en euros de ir a una
 /// gasolinera más barata (depósito medio de un turismo).
@@ -21,6 +24,8 @@ class StationDetailSheet extends StatefulWidget {
     required this.fuelService,
     required this.onNavigate,
     required this.onViewStation,
+    this.zoneAveragePrice,
+    this.loyaltyCard,
   });
 
   final GasStation station;
@@ -41,18 +46,30 @@ class StationDetailSheet extends StatefulWidget {
   /// navegar hasta ella.
   final void Function(GasStation station) onViewStation;
 
+  /// Precio medio de [highlightedFuel] entre las gasolineras de la zona
+  /// que se estaba mirando (mismos filtros que la lista/mapa), para poder
+  /// comparar. `null` si no aplica (p.ej. al abrir desde favoritas).
+  final double? zoneAveragePrice;
+
+  /// Tarjeta de descuento del usuario que aplica a la marca de esta
+  /// gasolinera, si tiene una guardada.
+  final LoyaltyCard? loyaltyCard;
+
   @override
   State<StationDetailSheet> createState() => _StationDetailSheetState();
 }
 
 class _StationDetailSheetState extends State<StationDetailSheet> {
   final _favoritesService = FavoritesService();
+  final _priceHistoryService = PriceHistoryService();
   bool _navigating = false;
   bool _isFavorite = false;
   String? _error;
 
   GasStation? _cheaperNearby;
   double? _savings;
+
+  List<MapEntry<DateTime, double>> _priceHistory = [];
 
   @override
   void initState() {
@@ -61,6 +78,11 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
       if (mounted) setState(() => _isFavorite = value);
     });
     _loadCheaperNearby();
+    _priceHistoryService
+        .getSeries(widget.station.id, widget.highlightedFuel)
+        .then((series) {
+      if (mounted) setState(() => _priceHistory = series);
+    });
   }
 
   /// Busca, entre las gasolineras cercanas (15 km) que venden el mismo
@@ -186,221 +208,259 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
   Widget build(BuildContext context) {
     final station = widget.station;
     final colorScheme = Theme.of(context).colorScheme;
+    final myPrice = station.priceFor(widget.highlightedFuel);
+
+    final card = widget.loyaltyCard;
+    final cardEffectivePrice = (card != null && myPrice != null)
+        ? (myPrice - card.discountPerLiter < 0 ? 0.0 : myPrice - card.discountPerLiter)
+        : null;
+
+    final zoneAvg = widget.zoneAveragePrice;
+    double? zoneDiffPct;
+    if (zoneAvg != null && zoneAvg > 0 && myPrice != null) {
+      zoneDiffPct = (myPrice - zoneAvg) / zoneAvg * 100;
+    }
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.local_gas_station_rounded,
-                      color: colorScheme.onPrimaryContainer),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        station.brand.isNotEmpty ? station.brand : 'Gasolinera',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 18),
-                      ),
-                      Text(
-                        [station.address, station.municipality, station.province]
-                            .where((s) => s.isNotEmpty)
-                            .join(', '),
-                        style: TextStyle(color: colorScheme.onSurfaceVariant),
-                      ),
-                    ],
+                    color: colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                IconButton(
-                  onPressed: _toggleFavorite,
-                  tooltip: _isFavorite
-                      ? 'Quitar de favoritas'
-                      : 'Guardar como favorita',
-                  icon: Icon(
-                    _isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: _isFavorite
-                        ? AppTheme.cheapestColor
-                        : colorScheme.onSurfaceVariant,
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (station.schedule.isNotEmpty)
-                  _InfoChip(icon: Icons.access_time_rounded, label: station.schedule),
-                if (station.distanceKm != null)
-                  _InfoChip(
-                    icon: Icons.social_distance_rounded,
-                    label: '${station.distanceKm!.toStringAsFixed(1)} km',
-                  ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: colorScheme.outlineVariant),
               ),
-              child: Column(
-                children: station.availableFuelTypes.map((type) {
-                  final highlighted = type == widget.highlightedFuel;
-                  return Container(
-                    margin: const EdgeInsets.all(4),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
-                      color: highlighted
-                          ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-                          : null,
-                      borderRadius: BorderRadius.circular(12),
+                      color: colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
                     ),
-                    child: Row(
+                    child: Icon(Icons.local_gas_station_rounded,
+                        color: colorScheme.onPrimaryContainer),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            type.label,
-                            style: TextStyle(
-                              fontWeight:
-                                  highlighted ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          ),
+                        Text(
+                          station.brand.isNotEmpty ? station.brand : 'Gasolinera',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 18),
                         ),
                         Text(
-                          '${station.priceFor(type)!.toStringAsFixed(3)} €',
-                          style: TextStyle(
-                            fontWeight:
-                                highlighted ? FontWeight.w800 : FontWeight.w600,
-                            fontSize: highlighted ? 16 : 14,
-                            color: highlighted
-                                ? AppTheme.cheapestColor
-                                : colorScheme.onSurface,
-                          ),
+                          [station.address, station.municipality, station.province]
+                              .where((s) => s.isNotEmpty)
+                              .join(', '),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
-                  );
-                }).toList(),
+                  ),
+                  IconButton(
+                    onPressed: _toggleFavorite,
+                    tooltip: _isFavorite
+                        ? 'Quitar de favoritas'
+                        : 'Guardar como favorita',
+                    icon: Icon(
+                      _isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: _isFavorite
+                          ? AppTheme.cheapestColor
+                          : colorScheme.onSurfaceVariant,
+                      size: 28,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            if (_cheaperNearby != null && _savings != null) ...[
               const SizedBox(height: 14),
-              Material(
-                color: AppTheme.cheapestColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (station.schedule.isNotEmpty)
+                    _InfoChip(icon: Icons.access_time_rounded, label: station.schedule),
+                  if (station.distanceKm != null)
+                    _InfoChip(
+                      icon: Icons.social_distance_rounded,
+                      label: '${station.distanceKm!.toStringAsFixed(1)} km',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  children: station.availableFuelTypes.map((type) {
+                    final highlighted = type == widget.highlightedFuel;
+                    return Container(
+                      margin: const EdgeInsets.all(4),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: highlighted
+                            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                            : null,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              type.label,
+                              style: TextStyle(
+                                fontWeight:
+                                    highlighted ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${station.priceFor(type)!.toStringAsFixed(3)} €',
+                            style: TextStyle(
+                              fontWeight:
+                                  highlighted ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: highlighted ? 16 : 14,
+                              color: highlighted
+                                  ? AppTheme.cheapestColor
+                                  : colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (cardEffectivePrice != null && card != null) ...[
+                const SizedBox(height: 14),
+                _InsightBanner(
+                  icon: Icons.local_activity_rounded,
+                  color: colorScheme.primary,
+                  spans: [
+                    const TextSpan(text: 'Con tu tarjeta '),
+                    TextSpan(
+                      text: card.brand,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const TextSpan(text: ', pagas '),
+                    TextSpan(
+                      text: '${cardEffectivePrice.toStringAsFixed(3)} €',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800, color: colorScheme.primary),
+                    ),
+                    TextSpan(
+                      text: ' el litro de ${widget.highlightedFuel.label} '
+                          '(-${card.discountPerLiter.toStringAsFixed(3)} €).',
+                    ),
+                  ],
+                ),
+              ],
+              if (zoneDiffPct != null && zoneDiffPct.round().abs() >= 1) ...[
+                const SizedBox(height: 14),
+                _InsightBanner(
+                  icon: zoneDiffPct < 0
+                      ? Icons.trending_down_rounded
+                      : Icons.trending_up_rounded,
+                  color: zoneDiffPct < 0
+                      ? AppTheme.cheapestColor
+                      : AppTheme.mostExpensiveColor,
+                  spans: [
+                    TextSpan(text: 'Pagas un ${zoneDiffPct.abs().round()}% '),
+                    TextSpan(
+                      text: zoneDiffPct < 0 ? 'menos' : 'más',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const TextSpan(text: ' que la media de la zona en '),
+                    TextSpan(
+                      text: widget.highlightedFuel.label,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const TextSpan(text: '.'),
+                  ],
+                ),
+              ],
+              if (_cheaperNearby != null && _savings != null) ...[
+                const SizedBox(height: 14),
+                _InsightBanner(
+                  icon: Icons.savings_rounded,
+                  color: AppTheme.cheapestColor,
                   onTap: () {
                     final cheaper = _cheaperNearby!;
                     Navigator.of(context).pop();
                     widget.onViewStation(cheaper);
                   },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: AppTheme.cheapestColor.withValues(alpha: 0.4)),
+                  spans: [
+                    const TextSpan(text: 'Hay una más barata cerca ('),
+                    TextSpan(
+                      text: _cheaperNearby!.brand.isNotEmpty
+                          ? _cheaperNearby!.brand
+                          : 'Gasolinera',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.savings_rounded,
-                            color: AppTheme.cheapestColor, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                  fontSize: 12.5, color: colorScheme.onSurface),
-                              children: [
-                                const TextSpan(
-                                    text: 'Hay una más barata cerca ('),
-                                TextSpan(
-                                  text: _cheaperNearby!.brand.isNotEmpty
-                                      ? _cheaperNearby!.brand
-                                      : 'Gasolinera',
-                                  style:
-                                      const TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                const TextSpan(text: '): ahorras '),
-                                TextSpan(
-                                  text: '${_savings!.toStringAsFixed(2)} €',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.cheapestColor),
-                                ),
-                                const TextSpan(
-                                    text:
-                                        ' en un depósito de $_assumedTankLiters L. '
-                                        'Toca para verla.'),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right_rounded,
-                            color: AppTheme.cheapestColor, size: 20),
-                      ],
+                    const TextSpan(text: '): ahorras '),
+                    TextSpan(
+                      text: '${_savings!.toStringAsFixed(2)} €',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, color: AppTheme.cheapestColor),
                     ),
-                  ),
+                    const TextSpan(
+                        text: ' en un depósito de $_assumedTankLiters L. '
+                            'Toca para verla.'),
+                  ],
                 ),
+              ],
+              if (_priceHistory.length >= 2) ...[
+                const SizedBox(height: 20),
+                Text(
+                  'Evolución de precio · ${widget.highlightedFuel.label}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                ),
+                const SizedBox(height: 10),
+                PriceTrendChart(points: _priceHistory),
+              ],
+              const SizedBox(height: 20),
+              if (_error != null) ...[
+                Text(
+                  _error!,
+                  style: TextStyle(color: colorScheme.error),
+                ),
+                const SizedBox(height: 12),
+              ],
+              FilledButton.icon(
+                onPressed: _navigating ? null : _showNavigationOptions,
+                icon: _navigating
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.navigation_rounded),
+                label:
+                    Text(_navigating ? 'Calculando ruta…' : 'Navegar hasta aquí'),
               ),
             ],
-            const SizedBox(height: 20),
-            if (_error != null) ...[
-              Text(
-                _error!,
-                style: TextStyle(color: colorScheme.error),
-              ),
-              const SizedBox(height: 12),
-            ],
-            FilledButton.icon(
-              onPressed: _navigating ? null : _showNavigationOptions,
-              icon: _navigating
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colorScheme.onPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.navigation_rounded),
-              label:
-                  Text(_navigating ? 'Calculando ruta…' : 'Navegar hasta aquí'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -430,6 +490,59 @@ class _InfoChip extends StatelessWidget {
           Text(label, style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant)),
         ],
       ),
+    );
+  }
+}
+
+/// Banner destacado con un dato relevante (ahorro, comparación con la
+/// zona, descuento de tarjeta), con el mismo lenguaje visual para las tres
+/// variantes: icono + texto enriquecido + borde/color del acento elegido.
+class _InsightBanner extends StatelessWidget {
+  const _InsightBanner({
+    required this.icon,
+    required this.color,
+    required this.spans,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final List<InlineSpan> spans;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 12.5, color: colorScheme.onSurface),
+                children: spans,
+              ),
+            ),
+          ),
+          if (onTap != null)
+            Icon(Icons.chevron_right_rounded, color: color, size: 20),
+        ],
+      ),
+    );
+
+    return Material(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(14),
+      child: onTap != null
+          ? InkWell(borderRadius: BorderRadius.circular(14), onTap: onTap, child: content)
+          : content,
     );
   }
 }

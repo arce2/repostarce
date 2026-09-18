@@ -7,9 +7,11 @@ import 'package:latlong2/latlong.dart';
 
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
+import '../models/loyalty_card.dart';
 import '../models/province.dart';
 import '../services/fuel_price_service.dart';
 import '../services/location_service.dart';
+import '../services/loyalty_card_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/map_markers.dart';
 import '../widgets/station_detail_sheet.dart';
@@ -41,9 +43,11 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   final _fuelService = FuelPriceService();
   final _locationService = LocationService();
+  final _loyaltyCardService = LoyaltyCardService();
   final _mapController = MapController();
 
   List<GasStation> _stations = [];
+  List<LoyaltyCard> _loyaltyCards = [];
   bool _loading = true;
   String? _error;
   FuelType _selectedFuel = FuelType.gasolina95;
@@ -69,6 +73,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void initState() {
     super.initState();
     _load();
+    _loyaltyCardService.getCards().then((cards) {
+      if (mounted) setState(() => _loyaltyCards = cards);
+    });
     _refreshTimer = Timer.periodic(
       const Duration(minutes: 5),
       (_) => _silentRefresh(),
@@ -196,6 +203,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
   List<GasStation> get _sorted =>
       _fuelService.sortedByPrice(_finalFiltered, _selectedFuel);
 
+  /// Precio medio de [_selectedFuel] entre las gasolineras que se están
+  /// viendo ahora mismo (con los filtros de municipio/localidad/24h ya
+  /// aplicados), para poder comparar cada gasolinera con "la zona".
+  double? get _zoneAveragePrice {
+    final prices =
+        _finalFiltered.map((s) => s.priceFor(_selectedFuel)).whereType<double>().toList();
+    if (prices.isEmpty) return null;
+    return prices.reduce((a, b) => a + b) / prices.length;
+  }
+
   LatLng get _mapCenter {
     if (widget.origin != null) return widget.origin!;
     final withCoords = _finalFiltered;
@@ -257,6 +274,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
         fuelService: _fuelService,
         onNavigate: () => _startNavigation(station),
         onViewStation: _openDetails,
+        zoneAveragePrice: _zoneAveragePrice,
+        loyaltyCard: _loyaltyCardService.cardFor(station, _loyaltyCards),
       ),
     );
   }
@@ -583,6 +602,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   fuelType: _selectedFuel,
                   isCheapest: station.id == cheapestId,
                   isMostExpensive: station.id == mostExpensiveId,
+                  cardDiscountPerLiter:
+                      _loyaltyCardService.cardFor(station, _loyaltyCards)?.discountPerLiter,
                   onTap: () => _openDetails(station),
                 ),
               );
