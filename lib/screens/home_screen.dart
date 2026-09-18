@@ -16,6 +16,7 @@ import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
+import 'backup_screen.dart';
 import 'fuel_log_screen.dart';
 import 'loyalty_cards_screen.dart';
 import 'navigation_screen.dart';
@@ -207,6 +208,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _loadLoyaltyCards();
   }
 
+  void _openFuelLog() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const FuelLogScreen(),
+    ));
+  }
+
+  void _openBackup() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const BackupScreen(),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -215,17 +228,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       appBar: AppBar(
         title: const Text('Repostarce'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.local_activity_rounded),
-            tooltip: 'Mis tarjetas de descuento',
-            onPressed: _openLoyaltyCards,
-          ),
-          IconButton(
-            icon: const Icon(Icons.receipt_long_rounded),
-            tooltip: 'Mis repostajes',
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const FuelLogScreen(),
-            )),
+          PopupMenuButton<VoidCallback>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'Más opciones',
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _openLoyaltyCards,
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.local_activity_rounded),
+                  title: Text('Mis tarjetas de descuento'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _openFuelLog,
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.receipt_long_rounded),
+                  title: Text('Mis repostajes'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _openBackup,
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.backup_rounded),
+                  title: Text('Copia de seguridad'),
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 4),
         ],

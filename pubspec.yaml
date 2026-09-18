@@ -45,6 +45,13 @@ dependencies:
   # la navegación propia de la app.
   url_launcher: ^6.3.1
 
+  # Copia de seguridad: generar el archivo, compartirlo (share_plus) y
+  # guardarlo en una carpeta temporal accesible (path_provider), o elegir
+  # un archivo para restaurar (file_picker).
+  share_plus: ^10.1.2
+  path_provider: ^2.1.4
+  file_picker: ^8.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
