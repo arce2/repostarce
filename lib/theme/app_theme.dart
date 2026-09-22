@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Tema visual compartido por toda la app.
 ///
-/// Azul como color de marca sobre fondos negros, y ámbar/rojo como acento
-/// semántico reservado para destacar el mejor y el peor precio (no son
-/// colores de marca, así que no cambian con ella).
+/// Naranja-rojo (a juego con la mascota zorro del logo) como color de
+/// marca sobre fondos negros, y ámbar/rojo como acento semántico
+/// reservado para destacar el mejor y el peor precio (no son colores de
+/// marca, así que no cambian con ella).
 class AppTheme {
   AppTheme._();
 
-  static const seedColor = Color(0xFF4285F4);
+  static const seedColor = Color(0xFFE8442A);
   static const cheapestColor = Color(0xFFC77B00);
   static const mostExpensiveColor = Color(0xFFC0392B);
 
@@ -37,6 +38,13 @@ class AppTheme {
         surfaceContainer: _nearBlack2,
         surfaceContainerHigh: _nearBlack3,
         surfaceContainerHighest: _nearBlack4,
+        // Material aclara mucho el color de marca en modo oscuro por
+        // accesibilidad; aquí se fuerza el naranja-rojo vivo del logo en
+        // vez del tono pastel automático.
+        primary: seedColor,
+        onPrimary: Colors.white,
+        primaryContainer: const Color(0xFF7A2415),
+        onPrimaryContainer: const Color(0xFFFFD9CC),
       );
     }
     final radius16 = BorderRadius.circular(16);
