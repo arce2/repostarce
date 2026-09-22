@@ -6,6 +6,8 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../config/api_keys.dart';
+import '../l10n/error_x.dart';
+import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../models/province.dart';
@@ -125,7 +127,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = localizedErrorMessage(e, context.l10n);
         _loading = false;
       });
     }
@@ -264,6 +266,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final sorted = _sorted;
     final cheapestId = sorted.isNotEmpty ? sorted.first.id : null;
     // Solo tiene sentido marcar "la más cara" si hay más de una estación:
@@ -273,11 +276,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.province?.name ?? 'Cerca de ti'),
+        title: Text(widget.province?.name ?? l10n.resultsTitleNearby),
         actions: [
           IconButton(
             icon: Icon(_showMap ? Icons.list_rounded : Icons.map_rounded),
-            tooltip: _showMap ? 'Ver lista' : 'Ver mapa',
+            tooltip: _showMap ? l10n.resultsListViewTooltip : l10n.resultsMapViewTooltip,
             onPressed: () {
               setState(() => _showMap = !_showMap);
               _recenterMap();
@@ -310,7 +313,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 alignment: Alignment.centerLeft,
                 child: InputChip(
                   avatar: const Icon(Icons.filter_alt_rounded, size: 18),
-                  label: Text('Filtrando: "$_searchFilter"'),
+                  label: Text(l10n.resultsFilteringChip(_searchFilter!)),
                   onDeleted: () {
                     setState(() => _searchFilter = null);
                     _recenterMap();
@@ -329,7 +332,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 itemBuilder: (_, i) {
                   if (i == FuelType.values.length) {
                     return FilterChip(
-                      label: const Text('Abierto 24h'),
+                      label: Text(l10n.results24hFilter),
                       selected: _only24h,
                       showCheckmark: false,
                       avatar: Icon(
@@ -348,7 +351,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   final type = FuelType.values[i];
                   final selected = _selectedFuel == type;
                   return ChoiceChip(
-                    label: Text(type.label),
+                    label: Text(type.labelFor(l10n)),
                     selected: selected,
                     showCheckmark: false,
                     avatar: selected
@@ -368,14 +371,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 initialValue: _selectedMunicipality,
                 isDense: true,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Municipio',
-                  prefixIcon: Icon(Icons.location_city_rounded),
+                decoration: InputDecoration(
+                  labelText: l10n.resultsMunicipalityLabel,
+                  prefixIcon: const Icon(Icons.location_city_rounded),
                 ),
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('Todos los municipios', overflow: TextOverflow.ellipsis),
+                    child: Text(l10n.resultsAllMunicipalities, overflow: TextOverflow.ellipsis),
                   ),
                   ..._municipalities.map(
                     (m) => DropdownMenuItem<String?>(
@@ -400,14 +403,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 initialValue: _selectedLocality,
                 isDense: true,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Localidad',
-                  prefixIcon: Icon(Icons.holiday_village_rounded),
+                decoration: InputDecoration(
+                  labelText: l10n.resultsLocalityLabel,
+                  prefixIcon: const Icon(Icons.holiday_village_rounded),
                 ),
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('Todos los pueblos', overflow: TextOverflow.ellipsis),
+                    child: Text(l10n.resultsAllLocalities, overflow: TextOverflow.ellipsis),
                   ),
                   ..._localities.map(
                     (l) => DropdownMenuItem<String?>(
@@ -433,6 +436,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     String? cheapestId,
     String? mostExpensiveId,
   ) {
+    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
 
     if (_loading) return const Center(child: CircularProgressIndicator());
@@ -450,7 +454,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               FilledButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Reintentar'),
+                label: Text(l10n.commonRetry),
               ),
             ],
           ),
@@ -469,10 +473,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
               const SizedBox(height: 12),
               Text(
                 _searchFilter != null
-                    ? 'Ninguna gasolinera coincide con "$_searchFilter" aquí.'
+                    ? l10n.resultsNoMatchSearch(_searchFilter!)
                     : _only24h
-                        ? 'No hay gasolineras abiertas 24h aquí.'
-                        : 'No hay gasolineras que vendan ${_selectedFuel.label} por aquí.',
+                        ? l10n.resultsNo24h
+                        : l10n.resultsNoFuelType(_selectedFuel.labelFor(l10n)),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -654,13 +658,14 @@ class _PriceExtremesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Row(
       children: [
         Expanded(
           child: _ExtremeCard(
             station: cheapest,
             fuelType: fuelType,
-            label: 'Más barata',
+            label: l10n.resultsCheapestLabel,
             icon: Icons.star_rounded,
             color: AppTheme.cheapestColor,
             onTap: onTapCheapest,
@@ -671,7 +676,7 @@ class _PriceExtremesRow extends StatelessWidget {
           child: _ExtremeCard(
             station: mostExpensive,
             fuelType: fuelType,
-            label: 'Más cara',
+            label: l10n.resultsMostExpensiveLabel,
             icon: Icons.trending_up_rounded,
             color: AppTheme.mostExpensiveColor,
             onTap: onTapMostExpensive,
@@ -733,7 +738,9 @@ class _ExtremeCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                station.brand.isNotEmpty ? station.brand : 'Gasolinera',
+                station.brand.isNotEmpty
+                    ? station.brand
+                    : context.l10n.commonGasStationFallback,
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -773,8 +780,10 @@ class _StationSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Autocomplete<GasStation>(
-      displayStringForOption: (s) => s.brand.isNotEmpty ? s.brand : 'Gasolinera',
+      displayStringForOption: (s) =>
+          s.brand.isNotEmpty ? s.brand : l10n.commonGasStationFallback,
       optionsBuilder: (TextEditingValue value) {
         final query = value.text.trim().toLowerCase();
         if (query.isEmpty) return const Iterable<GasStation>.empty();
@@ -796,9 +805,9 @@ class _StationSearchField extends StatelessWidget {
             onSubmittedQuery(text);
             focusNode.unfocus();
           },
-          decoration: const InputDecoration(
-            hintText: 'Buscar gasolinera, calle o pueblo…',
-            prefixIcon: Icon(Icons.search_rounded),
+          decoration: InputDecoration(
+            hintText: l10n.resultsSearchHint,
+            prefixIcon: const Icon(Icons.search_rounded),
           ),
         );
       },
@@ -828,7 +837,9 @@ class _StationSearchField extends StatelessWidget {
                     leading: Icon(Icons.local_gas_station_rounded,
                         color: colorScheme.primary),
                     title: Text(
-                      station.brand.isNotEmpty ? station.brand : 'Gasolinera',
+                      station.brand.isNotEmpty
+                          ? station.brand
+                          : l10n.commonGasStationFallback,
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(

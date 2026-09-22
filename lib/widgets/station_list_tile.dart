@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../theme/app_theme.dart';
@@ -30,6 +31,7 @@ class StationListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     final price = station.priceFor(fuelType);
     final highlighted = isCheapest || isMostExpensive;
@@ -43,7 +45,8 @@ class StationListTile extends StatelessWidget {
         : isMostExpensive
             ? Icons.trending_up_rounded
             : Icons.local_gas_station_rounded;
-    final badgeLabel = isCheapest ? 'más barata' : 'más cara';
+    final badgeLabel =
+        isCheapest ? l10n.stationCheapestBadge : l10n.stationMostExpensiveBadge;
     final trendDelta =
         price != null && previousPrice != null ? price - previousPrice! : null;
 
@@ -84,7 +87,9 @@ class StationListTile extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            station.brand.isNotEmpty ? station.brand : 'Gasolinera',
+                            station.brand.isNotEmpty
+                                ? station.brand
+                                : l10n.commonGasStationFallback,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 15),
                             maxLines: 1,

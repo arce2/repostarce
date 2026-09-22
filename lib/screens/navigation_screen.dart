@@ -7,9 +7,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../config/api_keys.dart';
+import '../l10n/error_x.dart';
+import '../l10n/l10n_x.dart';
 import '../models/gas_station.dart';
 import '../services/location_service.dart';
 import '../services/routing_service.dart';
+import '../services/trip_log_service.dart';
 import '../widgets/map_markers.dart';
 
 /// Pantalla de navegación turn-by-turn hasta la gasolinera elegida:
@@ -32,6 +35,7 @@ class NavigationScreen extends StatefulWidget {
 class _NavigationScreenState extends State<NavigationScreen> {
   final _routingService = RoutingService();
   final _locationService = LocationService();
+  final _tripLogService = TripLogService();
   final _mapController = MapController();
 
   static const _arrivalThresholdMeters = 30.0;
@@ -46,14 +50,32 @@ class _NavigationScreenState extends State<NavigationScreen> {
   bool _offRoute = false;
   String? _error;
 
+  /// Velocidades (m/s) recibidas del GPS durante el trayecto, para calcular
+  /// la velocidad media real al llegar y usarla en las recomendaciones de
+  /// conducción eficiente.
+  final List<double> _speedSamplesMs = [];
+  bool _speedRecorded = false;
+
   late LatLng _destination;
+  bool _initialLoadStarted = false;
 
   @override
   void initState() {
     super.initState();
     _destination = LatLng(widget.station.latitude, widget.station.longitude);
     _currentPosition = widget.origin;
-    _loadRoute(widget.origin);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // _loadRoute lee Localizations.localeOf(context), que no está
+    // disponible todavía en initState(): se pide la ruta aquí, la primera
+    // vez que las dependencias heredadas están listas.
+    if (!_initialLoadStarted) {
+      _initialLoadStarted = true;
+      _loadRoute(widget.origin);
+    }
   }
 
   @override
@@ -72,6 +94,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
       final route = await _routingService.getRoute(
         origin: from,
         destination: _destination,
+        languageCode: Localizations.localeOf(context).languageCode,
       );
       if (!mounted) return;
       setState(() {
@@ -83,7 +106,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = localizedErrorMessage(e, context.l10n);
         _loading = false;
       });
     }
@@ -96,6 +119,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
     setState(() => _currentPosition = current);
 
+    if (position.speed >= 0 && position.speed.isFinite) {
+      _speedSamplesMs.add(position.speed);
+    }
+
     final distanceToDestination = Geolocator.distanceBetween(
       current.latitude,
       current.longitude,
@@ -104,6 +131,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
     if (distanceToDestination <= _arrivalThresholdMeters) {
       setState(() => _arrived = true);
+      _recordTripSpeed();
       return;
     }
 
@@ -124,6 +152,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
     // Comprueba si nos hemos desviado bastante de la ruta trazada.
     final minDistanceToRoute = _distanceToPolyline(current, route.polyline);
     setState(() => _offRoute = minDistanceToRoute > _offRouteThresholdMeters);
+  }
+
+  /// Guarda la velocidad media real del trayecto (a partir de las muestras
+  /// del GPS recibidas), una sola vez por trayecto, para las
+  /// recomendaciones de conducción eficiente en "Consumo y gastos".
+  void _recordTripSpeed() {
+    if (_speedRecorded || _speedSamplesMs.isEmpty) return;
+    _speedRecorded = true;
+    final avgMs =
+        _speedSamplesMs.reduce((a, b) => a + b) / _speedSamplesMs.length;
+    _tripLogService.recordTripAverageSpeedKmh(avgMs * 3.6);
   }
 
   /// Distancia mínima (aprox., en metros) de un punto a una polilínea,
@@ -168,16 +207,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'A ${widget.station.brand.isNotEmpty ? widget.station.brand : "la gasolinera"}',
-        ),
+        title: Text(l10n.navTitle(widget.station.brand.isNotEmpty
+            ? widget.station.brand
+            : l10n.navGasStationFallback)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Recalcular ruta',
+            tooltip: l10n.navRecalcTooltip,
             onPressed: _currentPosition == null
                 ? null
                 : () => _loadRoute(_currentPosition!),
@@ -208,7 +248,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               FilledButton.icon(
                 onPressed: () => _loadRoute(_currentPosition ?? widget.origin),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Reintentar'),
+                label: Text(context.l10n.commonRetry),
               ),
             ],
           ),
@@ -371,6 +411,7 @@ class _OffRouteBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       color: colorScheme.tertiaryContainer,
@@ -383,13 +424,13 @@ class _OffRouteBanner extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Parece que te has salido de la ruta',
+                l10n.navOffRouteMessage,
                 style: TextStyle(color: colorScheme.onTertiaryContainer),
               ),
             ),
             TextButton(
               onPressed: onRecalculate,
-              child: const Text('Recalcular'),
+              child: Text(l10n.navRecalculate),
             ),
           ],
         ),
@@ -434,7 +475,7 @@ class _TripSummaryBar extends StatelessWidget {
             TextButton.icon(
               onPressed: onCancel,
               icon: const Icon(Icons.close_rounded),
-              label: const Text('Cancelar'),
+              label: Text(context.l10n.commonCancel),
             ),
           ],
         ),
@@ -473,9 +514,9 @@ class _ArrivalOverlay extends StatelessWidget {
                       size: 32, color: colorScheme.onPrimaryContainer),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  '¡Has llegado!',
-                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                Text(
+                  context.l10n.navArrived,
+                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
                 ),
                 if (brand.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -487,7 +528,7 @@ class _ArrivalOverlay extends StatelessWidget {
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Volver a la lista'),
+                  child: Text(context.l10n.navBackToList),
                 ),
               ],
             ),

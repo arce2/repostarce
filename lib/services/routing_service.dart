@@ -4,9 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../config/api_keys.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Un paso de la ruta (un tramo entre dos maniobras) con su instrucción ya
-/// en español.
+/// en el idioma pedido.
 class RouteStep {
   RouteStep({
     required this.maneuverLocation,
@@ -46,6 +47,11 @@ class RouteResult {
   final double totalDurationSeconds;
 }
 
+/// Idiomas de instrucciones de navegación soportados por OpenRouteService
+/// que también soporta la app. Si el idioma activo no está aquí, se usa
+/// inglés como reserva.
+const _orsSupportedLanguages = {'es', 'en', 'fr'};
+
 /// Calcula rutas de coche usando la API de pago de OpenRouteService
 /// (openrouteservice.org), con plan gratuito que sobra para probar la app
 /// o un lanzamiento pequeño. Sustituye al servidor de demo de OSRM, que no
@@ -60,7 +66,10 @@ class RoutingService {
   Future<RouteResult> getRoute({
     required LatLng origin,
     required LatLng destination,
+    String languageCode = 'es',
   }) async {
+    final orsLanguage =
+        _orsSupportedLanguages.contains(languageCode) ? languageCode : 'en';
     final uri = Uri.parse(_baseUrl);
     final response = await http
         .post(
@@ -74,22 +83,20 @@ class RoutingService {
               [origin.longitude, origin.latitude],
               [destination.longitude, destination.latitude],
             ],
-            'language': 'es',
+            'language': orsLanguage,
             'instructions': true,
           }),
         )
         .timeout(const Duration(seconds: 20));
 
     if (response.statusCode != 200) {
-      throw RoutingException(_errorMessageFor(response));
+      throw _exceptionFor(response);
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     final features = json['features'] as List?;
     if (features == null || features.isEmpty) {
-      throw RoutingException(
-        'No se ha encontrado una ruta en coche hasta esa gasolinera.',
-      );
+      throw RoutingException.noRoute();
     }
 
     final feature = features.first as Map<String, dynamic>;
@@ -113,7 +120,7 @@ class RoutingService {
 
       steps.add(RouteStep(
         maneuverLocation: coordinates[startIndex],
-        instruction: step['instruction'] as String? ?? 'Continúa',
+        instruction: step['instruction'] as String? ?? '',
         streetName: normalizedStreetName,
         distanceMeters: (step['distance'] as num).toDouble(),
         durationSeconds: (step['duration'] as num).toDouble(),
@@ -161,14 +168,12 @@ class RoutingService {
     }
   }
 
-  String _errorMessageFor(http.Response response) {
+  RoutingException _exceptionFor(http.Response response) {
     if (response.statusCode == 403) {
-      return 'La clave de OpenRouteService no es válida o no está '
-          'configurada (revisa lib/config/api_keys.dart).';
+      return RoutingException.invalidKey();
     }
     if (response.statusCode == 429) {
-      return 'Se ha superado el límite de peticiones de rutas por hoy. '
-          'Inténtalo más tarde.';
+      return RoutingException.rateLimited();
     }
     try {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -176,20 +181,56 @@ class RoutingService {
           ? (json['error'] as Map)['message']
           : json['error'];
       if (message is String && message.isNotEmpty) {
-        return 'No se ha podido calcular la ruta: $message';
+        return RoutingException.withMessage(message);
       }
     } catch (_) {
       // Cuerpo no era JSON con el formato esperado: usamos el mensaje genérico.
     }
-    return 'No se ha podido calcular la ruta (código ${response.statusCode}). '
-        'Inténtalo de nuevo.';
+    return RoutingException.withCode(response.statusCode);
   }
 }
 
+enum RoutingErrorReason { invalidKey, rateLimited, withMessage, withCode, noRoute }
+
 class RoutingException implements Exception {
-  RoutingException(this.message);
-  final String message;
+  RoutingException.invalidKey()
+      : reason = RoutingErrorReason.invalidKey,
+        message = null,
+        code = null;
+  RoutingException.rateLimited()
+      : reason = RoutingErrorReason.rateLimited,
+        message = null,
+        code = null;
+  RoutingException.withMessage(String this.message)
+      : reason = RoutingErrorReason.withMessage,
+        code = null;
+  RoutingException.withCode(int this.code)
+      : reason = RoutingErrorReason.withCode,
+        message = null;
+  RoutingException.noRoute()
+      : reason = RoutingErrorReason.noRoute,
+        message = null,
+        code = null;
+
+  final RoutingErrorReason reason;
+  final String? message;
+  final int? code;
+
+  String localizedMessage(AppLocalizations l10n) {
+    switch (reason) {
+      case RoutingErrorReason.invalidKey:
+        return l10n.routingKeyInvalid;
+      case RoutingErrorReason.rateLimited:
+        return l10n.routingRateLimited;
+      case RoutingErrorReason.withMessage:
+        return l10n.routingGenericErrorWithMessage(message!);
+      case RoutingErrorReason.withCode:
+        return l10n.routingGenericErrorWithCode(code!);
+      case RoutingErrorReason.noRoute:
+        return l10n.routingNoRoute;
+    }
+  }
 
   @override
-  String toString() => message;
+  String toString() => 'RoutingException(${reason.name})';
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../l10n/gen/app_localizations.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 
@@ -32,10 +33,7 @@ class FuelPriceService {
     final response = await http.get(uri).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 200) {
-      throw FuelPriceException(
-        'El servicio de precios de carburantes no respondió correctamente '
-        '(código ${response.statusCode}). Inténtalo de nuevo en unos minutos.',
-      );
+      throw FuelPriceException(response.statusCode);
     }
 
     // La API devuelve utf8, aunque el header diga otra cosa.
@@ -116,9 +114,12 @@ class FuelPriceService {
 }
 
 class FuelPriceException implements Exception {
-  FuelPriceException(this.message);
-  final String message;
+  FuelPriceException(this.statusCode);
+  final int statusCode;
+
+  String localizedMessage(AppLocalizations l10n) =>
+      l10n.fuelPriceServiceError(statusCode);
 
   @override
-  String toString() => message;
+  String toString() => 'FuelPriceException($statusCode)';
 }

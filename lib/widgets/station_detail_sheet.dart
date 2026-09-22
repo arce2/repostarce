@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/error_x.dart';
+import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../services/favorites_service.dart';
@@ -115,7 +117,9 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
     try {
       await widget.onNavigate();
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() => _error = localizedErrorMessage(e, context.l10n));
+      }
     } finally {
       if (mounted) setState(() => _navigating = false);
     }
@@ -123,6 +127,7 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final station = widget.station;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -162,7 +167,9 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        station.brand.isNotEmpty ? station.brand : 'Gasolinera',
+                        station.brand.isNotEmpty
+                            ? station.brand
+                            : l10n.commonGasStationFallback,
                         style: const TextStyle(
                             fontWeight: FontWeight.w800, fontSize: 18),
                       ),
@@ -178,8 +185,8 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                 IconButton(
                   onPressed: _toggleFavorite,
                   tooltip: _isFavorite
-                      ? 'Quitar de favoritas'
-                      : 'Guardar como favorita',
+                      ? l10n.stationRemoveFavoriteTooltip
+                      : l10n.stationSaveFavoriteTooltip,
                   icon: Icon(
                     _isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
                     color: _isFavorite
@@ -229,7 +236,7 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                       children: [
                         Expanded(
                           child: Text(
-                            type.label,
+                            type.labelFor(l10n),
                             style: TextStyle(
                               fontWeight:
                                   highlighted ? FontWeight.w700 : FontWeight.w500,
@@ -279,33 +286,16 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                             color: AppTheme.cheapestColor, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                  fontSize: 12.5, color: colorScheme.onSurface),
-                              children: [
-                                const TextSpan(
-                                    text: 'Hay una más barata cerca ('),
-                                TextSpan(
-                                  text: _cheaperNearby!.brand.isNotEmpty
-                                      ? _cheaperNearby!.brand
-                                      : 'Gasolinera',
-                                  style:
-                                      const TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                const TextSpan(text: '): ahorras '),
-                                TextSpan(
-                                  text: '${_savings!.toStringAsFixed(2)} €',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.cheapestColor),
-                                ),
-                                const TextSpan(
-                                    text:
-                                        ' en un depósito de $_assumedTankLiters L. '
-                                        'Toca para verla.'),
-                              ],
+                          child: Text(
+                            l10n.stationCheaperNearby(
+                              _cheaperNearby!.brand.isNotEmpty
+                                  ? _cheaperNearby!.brand
+                                  : l10n.commonGasStationFallback,
+                              _savings!.toStringAsFixed(2),
+                              _assumedTankLiters,
                             ),
+                            style: TextStyle(
+                                fontSize: 12.5, color: colorScheme.onSurface),
                           ),
                         ),
                         const Icon(Icons.chevron_right_rounded,
@@ -336,8 +326,9 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                       ),
                     )
                   : const Icon(Icons.navigation_rounded),
-              label:
-                  Text(_navigating ? 'Calculando ruta…' : 'Navegar hasta aquí'),
+              label: Text(_navigating
+                  ? l10n.stationCalculatingRoute
+                  : l10n.stationNavigateButton),
             ),
           ],
         ),

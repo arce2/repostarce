@@ -3,25 +3,32 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../l10n/error_x.dart';
+import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../models/province.dart';
 import '../services/favorites_service.dart';
 import '../services/fuel_price_service.dart';
+import '../services/locale_service.dart';
 import '../services/location_service.dart';
 import '../services/price_alert_service.dart';
 import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
+import 'fuel_log_screen.dart';
 import 'navigation_screen.dart';
 import 'results_screen.dart';
+import 'settings_screen.dart';
 
 /// Pantalla de arranque: el usuario elige cómo quiere buscar gasolineras,
 /// bien con su ubicación GPS, bien eligiendo su provincia a mano. Si tiene
 /// gasolineras favoritas guardadas, se ven aquí mismo con su precio actual.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.localeController});
+
+  final LocaleController localeController;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -114,8 +121,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() => _favoritePreviousPrices[station.id] = previous);
       }
-      if (previous != null && (price - previous).abs() >= 0.001) {
+      if (previous != null && (price - previous).abs() >= 0.001 && mounted) {
         await _priceAlertService.notifyPriceChange(
+          l10n: context.l10n,
           stationId: station.id,
           brand: station.brand,
           oldPrice: previous,
@@ -140,7 +148,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ));
       _loadFavorites();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() => _error = localizedErrorMessage(e, context.l10n));
+      }
     } finally {
       if (mounted) setState(() => _loadingLocation = false);
     }
@@ -149,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _searchByProvince() async {
     final province = _selectedProvince;
     if (province == null) {
-      setState(() => _error = 'Elige antes una provincia de la lista.');
+      setState(() => _error = context.l10n.homeErrorChooseProvince);
       return;
     }
     setState(() => _error = null);
@@ -187,12 +197,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ).then((_) => _loadFavorites());
   }
 
+  void _openSettings() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SettingsScreen(localeController: widget.localeController),
+    ));
+  }
+
+  void _openFuelLog() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const FuelLogScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Repostarce')),
+      appBar: AppBar(
+        title: const Text('Gasly'),
+        actions: [
+          IconButton(
+            onPressed: _openSettings,
+            tooltip: l10n.homeSettingsTooltip,
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -221,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Encuentra la gasolinera\nmás barata',
+                        l10n.homeHeadline,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
@@ -229,12 +260,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Compara precios cerca de ti y te llevamos hasta '
-                        'allí paso a paso, sin salir de la app.',
+                        l10n.homeSubtitle,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
+                      ),
+                      const SizedBox(height: 20),
+                      Material(
+                        color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _openFuelLog,
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Icon(Icons.receipt_long_rounded,
+                                    color: colorScheme.onSecondaryContainer),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.homeFuelLogCardTitle,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: colorScheme.onSecondaryContainer,
+                                        ),
+                                      ),
+                                      Text(
+                                        l10n.homeFuelLogCardSubtitle,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSecondaryContainer
+                                              .withValues(alpha: 0.85),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.chevron_right_rounded,
+                                    color: colorScheme.onSecondaryContainer),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       if (!_loadingFavorites) ...[
                         const SizedBox(height: 28),
@@ -244,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 size: 18, color: AppTheme.cheapestColor),
                             const SizedBox(width: 6),
                             Text(
-                              'Tus favoritas',
+                              l10n.homeFavoritesTitle,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: colorScheme.onSurfaceVariant,
@@ -270,9 +343,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Toca la ⭐ en cualquier gasolinera para '
-                                  'guardarla aquí y ver su precio sin buscarla '
-                                  'cada vez.',
+                                  l10n.homeFavoritesEmptyHint,
                                   style: TextStyle(
                                     fontSize: 12.5,
                                     color: colorScheme.onSurfaceVariant,
@@ -312,8 +383,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               )
                             : const Icon(Icons.my_location_rounded),
                         label: Text(_loadingLocation
-                            ? 'Buscando tu ubicación…'
-                            : 'Usar mi ubicación actual'),
+                            ? l10n.homeUseLocationLoading
+                            : l10n.homeUseLocationButton),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -322,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
-                              'O BUSCA POR ZONA',
+                              l10n.homeSearchByZoneDivider,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -348,9 +419,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             DropdownButtonFormField<Province>(
                               initialValue: _selectedProvince,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Elige tu provincia',
-                                prefixIcon: Icon(Icons.map_outlined),
+                              decoration: InputDecoration(
+                                labelText: l10n.homeProvinceLabel,
+                                prefixIcon: const Icon(Icons.map_outlined),
                               ),
                               items: Province.all
                                   .map((p) => DropdownMenuItem(
@@ -365,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             OutlinedButton.icon(
                               onPressed: _searchByProvince,
                               icon: const Icon(Icons.search_rounded),
-                              label: const Text('Buscar en esta provincia'),
+                              label: Text(l10n.homeSearchProvinceButton),
                             ),
                           ],
                         ),

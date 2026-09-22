@@ -4,7 +4,7 @@
 
 
 name: repostarce
-description: "Encuentra la gasolinera más barata cerca de ti y navega hasta ella."
+description: "Gasly: encuentra la gasolinera más barata cerca de ti y navega hasta ella."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -39,6 +39,11 @@ dependencies:
   # favorita.
   flutter_local_notifications: ^18.0.1
 
+  # Selector de idioma (español / inglés / francés).
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,6 +54,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/icon/
 

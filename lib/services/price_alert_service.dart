@@ -1,5 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../l10n/gen/app_localizations.dart';
+
 /// Muestra una notificación del sistema cuando cambia (sube o baja) el
 /// precio de una gasolinera favorita.
 ///
@@ -29,6 +31,7 @@ class PriceAlertService {
   /// Avisa de que el precio de una favorita ha cambiado desde la última
   /// vez que se comprobó, tanto si ha bajado como si ha subido.
   Future<void> notifyPriceChange({
+    required AppLocalizations l10n,
     required String stationId,
     required String brand,
     required double oldPrice,
@@ -36,22 +39,25 @@ class PriceAlertService {
   }) async {
     await _ensureInitialized();
     final dropped = newPrice < oldPrice;
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'price_changes',
-      'Cambios de precio',
-      channelDescription:
-          'Avisa cuando sube o baja el precio de una gasolinera favorita',
+      l10n.priceAlertChannelName,
+      channelDescription: l10n.priceAlertChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
     );
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
+    final displayBrand = brand.isNotEmpty ? brand : l10n.priceAlertFallbackBrand;
     final title = dropped
-        ? '¡Bajó el precio en ${brand.isNotEmpty ? brand : "tu favorita"}!'
-        : 'Subió el precio en ${brand.isNotEmpty ? brand : "tu favorita"}';
+        ? l10n.priceAlertDropTitle(displayBrand)
+        : l10n.priceAlertRiseTitle(displayBrand);
     await _plugin.show(
       stationId.hashCode & 0x7fffffff,
       title,
-      'Ahora a ${newPrice.toStringAsFixed(3)} € (antes ${oldPrice.toStringAsFixed(3)} €)',
+      l10n.priceAlertBody(
+        newPrice.toStringAsFixed(3),
+        oldPrice.toStringAsFixed(3),
+      ),
       details,
     );
   }

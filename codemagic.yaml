@@ -20,7 +20,7 @@ workflows:
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
           cd build/ios/ipa
-          zip -r Repostarce-unsigned.ipa Payload
-          mv Repostarce-unsigned.ipa "$CM_BUILD_DIR/"
+          zip -r Gasly-unsigned.ipa Payload
+          mv Gasly-unsigned.ipa "$CM_BUILD_DIR/"
     artifacts:
-      - Repostarce-unsigned.ipa
+      - Gasly-unsigned.ipa
