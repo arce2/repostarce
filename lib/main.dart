@@ -42,7 +42,7 @@ class _FuelFinderAppState extends State<FuelFinderApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       locale: _localeController.locale,
       supportedLocales: supportedAppLocales,
       localizationsDelegates: const [

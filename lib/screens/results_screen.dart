@@ -62,6 +62,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
   /// Si está activo, solo se muestran gasolineras abiertas 24 horas.
   bool _only24h = false;
 
+  /// Cuando la localidad elegida solo tiene una gasolinera, aquí se
+  /// guardan otras cercanas (hasta [_recommendationRadiusKm]) como
+  /// recomendación, para que el usuario no se quede con una sola opción
+  /// para comparar precio.
+  static const _recommendationRadiusKm = 20.0;
+  List<GasStation> _nearbyRecommendations = [];
+  Map<String, double> _recommendationDistancesKm = {};
+  bool _loadingRecommendations = false;
+
   /// Vuelve a pedir los precios cada pocos minutos mientras esta pantalla
   /// está abierta, para reflejar cambios sin tener que salir y entrar de
   /// nuevo. No toca el estado de carga/error ni los filtros elegidos, solo
@@ -111,6 +120,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
       _selectedLocality = null;
       _searchFilter = null;
       _only24h = false;
+      _nearbyRecommendations = [];
+      _recommendationDistancesKm = {};
     });
     try {
       final stations = widget.origin != null
@@ -237,6 +248,65 @@ class _ResultsScreenState extends State<ResultsScreen> {
         // El controlador todavía no está asociado a un mapa visible.
       }
     });
+  }
+
+  /// Si la localidad elegida solo tiene una gasolinera, busca otras hasta
+  /// [_recommendationRadiusKm] alrededor (en toda España, no solo en la
+  /// provincia actual) para sugerirlas como alternativa cercana.
+  Future<void> _maybeLoadNearbyRecommendations() async {
+    final localityStations = _localityFiltered;
+    if (_selectedLocality == null || localityStations.length != 1) {
+      if (_nearbyRecommendations.isNotEmpty || _recommendationDistancesKm.isNotEmpty) {
+        setState(() {
+          _nearbyRecommendations = [];
+          _recommendationDistancesKm = {};
+        });
+      }
+      return;
+    }
+
+    setState(() => _loadingRecommendations = true);
+    final reference = localityStations.first;
+    try {
+      final nearby = await _fuelService.findNearby(
+        lat: reference.latitude,
+        lng: reference.longitude,
+        initialRadiusKm: _recommendationRadiusKm,
+        minResults: 1,
+        maxRadiusKm: _recommendationRadiusKm,
+      );
+
+      // findNearby() sobrescribe distanceKm en las estaciones cercanas
+      // (efecto secundario de su uso habitual con la ubicación del
+      // usuario). Aquí capturamos esas distancias aparte y restauramos el
+      // campo a null para no "ensuciar" el resto de la lista de esta
+      // provincia, que no debería mostrar distancia.
+      final distances = <String, double>{
+        for (final s in nearby) s.id: s.distanceKm!,
+      };
+      for (final s in nearby) {
+        s.distanceKm = null;
+      }
+
+      final others = nearby.where((s) => s.id != reference.id).toList();
+      final sorted =
+          _fuelService.sortedByPrice(others, _selectedFuel).take(3).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _nearbyRecommendations = sorted;
+        _recommendationDistancesKm = distances;
+        _loadingRecommendations = false;
+      });
+    } catch (_) {
+      // Fallo puntual: simplemente no mostramos recomendaciones esta vez.
+      if (!mounted) return;
+      setState(() {
+        _nearbyRecommendations = [];
+        _recommendationDistancesKm = {};
+        _loadingRecommendations = false;
+      });
+    }
   }
 
   Future<void> _startNavigation(GasStation station) async {
@@ -393,6 +463,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     _selectedLocality = null;
                   });
                   _recenterMap();
+                  _maybeLoadNearbyRecommendations();
                 },
               ),
             ),
@@ -422,7 +493,20 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 onChanged: (l) {
                   setState(() => _selectedLocality = l);
                   _recenterMap();
+                  _maybeLoadNearbyRecommendations();
                 },
+              ),
+            ),
+          if (_selectedLocality != null &&
+              (_loadingRecommendations || _nearbyRecommendations.isNotEmpty))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: _NearbyRecommendations(
+                loading: _loadingRecommendations,
+                stations: _nearbyRecommendations,
+                distancesKm: _recommendationDistancesKm,
+                fuelType: _selectedFuel,
+                onTap: _openDetails,
               ),
             ),
           Expanded(child: _buildBody(sorted, cheapestId, mostExpensiveId)),
@@ -602,6 +686,84 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Aviso con hasta 3 gasolineras cercanas (fuera de la localidad elegida,
+/// pero a menos de 20 km) que se muestra cuando esa localidad solo tiene
+/// una gasolinera, para que el usuario tenga con qué comparar precio.
+class _NearbyRecommendations extends StatelessWidget {
+  const _NearbyRecommendations({
+    required this.loading,
+    required this.stations,
+    required this.distancesKm,
+    required this.fuelType,
+    required this.onTap,
+  });
+
+  final bool loading;
+  final List<GasStation> stations;
+  final Map<String, double> distancesKm;
+  final FuelType fuelType;
+  final ValueChanged<GasStation> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.near_me_rounded, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.resultsNearbyTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.resultsNearbySubtitle,
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          if (loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            ...stations.map((station) => Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: StationListTile(
+                    station: station,
+                    fuelType: fuelType,
+                    isCheapest: false,
+                    distanceKmOverride: distancesKm[station.id],
+                    onTap: () => onTap(station),
+                  ),
+                )),
+        ],
+      ),
     );
   }
 }

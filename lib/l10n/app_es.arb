@@ -43,6 +43,8 @@
   "resultsNo24h": "No hay gasolineras abiertas 24h aquí.",
   "resultsNoFuelType": "No hay gasolineras que vendan {fuel} por aquí.",
   "@resultsNoFuelType": { "placeholders": { "fuel": { "type": "String" } } },
+  "resultsNearbyTitle": "También cerca de ti",
+  "resultsNearbySubtitle": "Hay pocas gasolineras en tu localidad; estas están a menos de 20 km.",
 
   "navTitle": "A {brand}",
   "@navTitle": { "placeholders": { "brand": { "type": "String" } } },

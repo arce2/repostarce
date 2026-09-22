@@ -316,6 +316,18 @@ abstract class AppLocalizations {
   /// **'No hay gasolineras que vendan {fuel} por aquí.'**
   String resultsNoFuelType(String fuel);
 
+  /// No description provided for @resultsNearbyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'También cerca de ti'**
+  String get resultsNearbyTitle;
+
+  /// No description provided for @resultsNearbySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Hay pocas gasolineras en tu localidad; estas están a menos de 20 km.'**
+  String get resultsNearbySubtitle;
+
   /// No description provided for @navTitle.
   ///
   /// In es, this message translates to:

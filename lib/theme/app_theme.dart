@@ -2,24 +2,43 @@ import 'package:flutter/material.dart';
 
 /// Tema visual compartido por toda la app.
 ///
-/// Verde como color de marca (ahorro / energía) y ámbar como acento
-/// reservado para destacar el mejor precio, tanto en el tema claro como
-/// en el oscuro.
+/// Azul como color de marca sobre fondos negros, y ámbar/rojo como acento
+/// semántico reservado para destacar el mejor y el peor precio (no son
+/// colores de marca, así que no cambian con ella).
 class AppTheme {
   AppTheme._();
 
-  static const seedColor = Color(0xFF0F7A4E);
+  static const seedColor = Color(0xFF4285F4);
   static const cheapestColor = Color(0xFFC77B00);
   static const mostExpensiveColor = Color(0xFFC0392B);
+
+  /// Fondo "negro" real para el tema oscuro: el tono oscuro que genera
+  /// Material 3 a partir de la semilla no llega a ser negro puro, así que
+  /// se sobrescriben aquí los tonos de superficie.
+  static const _trueBlack = Color(0xFF000000);
+  static const _nearBlack1 = Color(0xFF0A0A0A);
+  static const _nearBlack2 = Color(0xFF121212);
+  static const _nearBlack3 = Color(0xFF1A1A1A);
+  static const _nearBlack4 = Color(0xFF222222);
 
   static ThemeData light() => _base(Brightness.light);
   static ThemeData dark() => _base(Brightness.dark);
 
   static ThemeData _base(Brightness brightness) {
-    final colorScheme = ColorScheme.fromSeed(
+    var colorScheme = ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: brightness,
     );
+    if (brightness == Brightness.dark) {
+      colorScheme = colorScheme.copyWith(
+        surface: _trueBlack,
+        surfaceContainerLowest: _trueBlack,
+        surfaceContainerLow: _nearBlack1,
+        surfaceContainer: _nearBlack2,
+        surfaceContainerHigh: _nearBlack3,
+        surfaceContainerHighest: _nearBlack4,
+      );
+    }
     final radius16 = BorderRadius.circular(16);
     final radius20 = BorderRadius.circular(20);
 

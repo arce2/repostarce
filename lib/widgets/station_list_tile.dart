@@ -15,6 +15,7 @@ class StationListTile extends StatelessWidget {
     required this.isCheapest,
     this.isMostExpensive = false,
     this.previousPrice,
+    this.distanceKmOverride,
     required this.onTap,
   });
 
@@ -27,6 +28,12 @@ class StationListTile extends StatelessWidget {
   /// mostrar si ha subido o bajado desde entonces. `null` si no hay
   /// histórico (p.ej. primera vez que se consulta esta gasolinera).
   final double? previousPrice;
+
+  /// Distancia a mostrar en vez de `station.distanceKm`. Se usa cuando la
+  /// distancia se calculó respecto a un punto que no es la ubicación del
+  /// usuario (p.ej. una recomendación cercana a una localidad), para no
+  /// tener que mutar el campo compartido del modelo.
+  final double? distanceKmOverride;
   final VoidCallback onTap;
 
   @override
@@ -49,6 +56,7 @@ class StationListTile extends StatelessWidget {
         isCheapest ? l10n.stationCheapestBadge : l10n.stationMostExpensiveBadge;
     final trendDelta =
         price != null && previousPrice != null ? price - previousPrice! : null;
+    final distanceKm = distanceKmOverride ?? station.distanceKm;
 
     return Material(
       color: colorScheme.surfaceContainerLow,
@@ -122,8 +130,8 @@ class StationListTile extends StatelessWidget {
                       [
                         station.address,
                         station.municipality,
-                        if (station.distanceKm != null)
-                          '${station.distanceKm!.toStringAsFixed(1)} km',
+                        if (distanceKm != null)
+                          '${distanceKm.toStringAsFixed(1)} km',
                       ].where((s) => s.isNotEmpty).join(' · '),
                       style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                       maxLines: 2,

@@ -127,6 +127,13 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get resultsNearbyTitle => 'También cerca de ti';
+
+  @override
+  String get resultsNearbySubtitle =>
+      'Hay pocas gasolineras en tu localidad; estas están a menos de 20 km.';
+
+  @override
   String navTitle(String brand) {
     return 'A $brand';
   }

@@ -43,6 +43,8 @@
   "resultsNo24h": "Aucune station ouverte 24h/24 ici.",
   "resultsNoFuelType": "Aucune station ne vend du {fuel} par ici.",
   "@resultsNoFuelType": { "placeholders": { "fuel": { "type": "String" } } },
+  "resultsNearbyTitle": "Aussi près de toi",
+  "resultsNearbySubtitle": "Il y a peu de stations dans ta localité ; celles-ci sont à moins de 20 km.",
 
   "navTitle": "Vers {brand}",
   "@navTitle": { "placeholders": { "brand": { "type": "String" } } },
