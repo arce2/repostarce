@@ -237,17 +237,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     children: [
                       const SizedBox(height: 12),
                       Container(
-                        width: 88,
-                        height: 88,
+                        width: 220,
+                        height: 220,
                         alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.local_gas_station_rounded,
-                          size: 44,
-                          color: colorScheme.onPrimaryContainer,
+                        child: Image.asset(
+                          'assets/icon/welcome_fox.png',
+                          width: 220,
+                          height: 220,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 20),
