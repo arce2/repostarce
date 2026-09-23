@@ -102,6 +102,10 @@
   "settingsLanguageEnglish": "English",
   "settingsLanguageFrench": "Français",
 
+  "settingsLegalLabel": "Legal",
+  "settingsPrivacyPolicy": "Política de privacidad",
+  "settingsLegalNotice": "Aviso legal",
+
   "fuelLogTitle": "Consumo y gastos",
   "fuelLogAddTooltip": "Añadir repostaje",
   "fuelLogFormTitle": "Nuevo repostaje",

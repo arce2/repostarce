@@ -65,6 +65,16 @@ android {
                 // sirve para publicar.
                 signingConfigs.getByName("debug")
             }
+            // Minifica y ofusca la capa nativa (Kotlin/Java) del release para
+            // dificultar la ingenieria inversa. No oculta las claves de API
+            // Dart (esas viven en el snapshot AOT, fuera del alcance de R8),
+            // pero reduce la superficie legible del widget/plugins nativos.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

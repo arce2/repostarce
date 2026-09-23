@@ -277,6 +277,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsLanguageFrench => 'Français';
 
   @override
+  String get settingsLegalLabel => 'Mentions légales';
+
+  @override
+  String get settingsPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get settingsLegalNotice => 'Mentions légales';
+
+  @override
   String get fuelLogTitle => 'Consommation et dépenses';
 
   @override

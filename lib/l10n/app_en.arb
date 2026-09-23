@@ -102,6 +102,10 @@
   "settingsLanguageEnglish": "English",
   "settingsLanguageFrench": "Français",
 
+  "settingsLegalLabel": "Legal",
+  "settingsPrivacyPolicy": "Privacy policy",
+  "settingsLegalNotice": "Legal notice",
+
   "fuelLogTitle": "Fuel log & expenses",
   "fuelLogAddTooltip": "Add fill-up",
   "fuelLogFormTitle": "New fill-up",

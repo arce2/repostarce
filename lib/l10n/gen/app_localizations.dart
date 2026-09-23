@@ -568,6 +568,24 @@ abstract class AppLocalizations {
   /// **'Français'**
   String get settingsLanguageFrench;
 
+  /// No description provided for @settingsLegalLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Legal'**
+  String get settingsLegalLabel;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de privacidad'**
+  String get settingsPrivacyPolicy;
+
+  /// No description provided for @settingsLegalNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso legal'**
+  String get settingsLegalNotice;
+
   /// No description provided for @fuelLogTitle.
   ///
   /// In es, this message translates to:

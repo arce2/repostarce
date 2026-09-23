@@ -30,7 +30,7 @@ class FuelPriceService {
     if (isFresh) return _cache!;
 
     final uri = Uri.parse('$_baseUrl/EstacionesTerrestres/');
-    final response = await http.get(uri).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri).timeout(const Duration(seconds: 90));
 
     if (response.statusCode != 200) {
       throw FuelPriceException(response.statusCode);

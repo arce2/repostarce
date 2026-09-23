@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n_x.dart';
+import '../legal/legal_texts.dart';
 import '../services/locale_service.dart';
+import 'legal_screen.dart';
 
 /// Ajustes de la app: por ahora, solo el selector de idioma.
 class SettingsScreen extends StatelessWidget {
@@ -56,6 +58,42 @@ class SettingsScreen extends StatelessWidget {
                   onChanged: (value) => localeController.setLocale(value),
                   title: Text(_labelFor(context, option)),
                 ),
+              const Divider(height: 32),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                child: Text(
+                  l10n.settingsLegalLabel,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: Text(l10n.settingsPrivacyPolicy),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LegalScreen(
+                      title: l10n.settingsPrivacyPolicy,
+                      body: privacyPolicyText,
+                    ),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.gavel_outlined),
+                title: Text(l10n.settingsLegalNotice),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LegalScreen(
+                      title: l10n.settingsLegalNotice,
+                      body: legalNoticeText,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );

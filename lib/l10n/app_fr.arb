@@ -102,6 +102,10 @@
   "settingsLanguageEnglish": "English",
   "settingsLanguageFrench": "Français",
 
+  "settingsLegalLabel": "Mentions légales",
+  "settingsPrivacyPolicy": "Politique de confidentialité",
+  "settingsLegalNotice": "Mentions légales",
+
   "fuelLogTitle": "Consommation et dépenses",
   "fuelLogAddTooltip": "Ajouter un plein",
   "fuelLogFormTitle": "Nouveau plein",
