@@ -44,6 +44,11 @@ dependencies:
     sdk: flutter
   intl: ^0.20.3
 
+  # Widget de pantalla de inicio con la gasolinera más barata (Android;
+  # en iOS necesita además un target de Widget nativo hecho en Xcode/Mac,
+  # ver README).
+  home_widget: ^0.10.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

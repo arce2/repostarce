@@ -169,13 +169,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _loadFavorites();
   }
 
-  Future<void> _startNavigationTo(GasStation station) async {
+  Future<void> _startNavigationTo(GasStation station, FuelType fuelType) async {
     final position = await _locationService.getCurrentPosition();
     if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => NavigationScreen(
         origin: LatLng(position.latitude, position.longitude),
         station: station,
+        fuelType: fuelType,
       ),
     ));
   }
@@ -191,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         station: station,
         highlightedFuel: fuelType,
         fuelService: _fuelService,
-        onNavigate: () => _startNavigationTo(station),
+        onNavigate: () => _startNavigationTo(station, fuelType),
         onViewStation: _openFavoriteDetails,
       ),
     ).then((_) => _loadFavorites());

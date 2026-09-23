@@ -131,5 +131,19 @@
   "@recoHighSpeed": { "placeholders": { "speed": { "type": "String" } } },
   "recoLowSpeedHighConsumption": "Tes derniers trajets sont courts et à faible vitesse moyenne ({speed} km/h), ce qui fait souvent grimper la consommation en ville. Regrouper tes courses en un seul trajet peut aider.",
   "@recoLowSpeedHighConsumption": { "placeholders": { "speed": { "type": "String" } } },
-  "recoAllGood": "Ta consommation et ta façon de conduire sont dans la normale. Continue comme ça."
+  "recoAllGood": "Ta consommation et ta façon de conduire sont dans la normale. Continue comme ça.",
+
+  "fuelLogVehicleLabel": "Véhicule",
+  "fuelLogDefaultVehicleName": "Ma voiture",
+  "fuelLogManageVehiclesTooltip": "Gérer les véhicules",
+  "fuelLogManageVehiclesTitle": "Tes véhicules",
+  "fuelLogAddVehicleHint": "Nom du véhicule (ex. Voiture, Moto)",
+  "fuelLogAddVehicleButton": "Ajouter",
+  "fuelLogDeleteVehicleTooltip": "Supprimer le véhicule",
+  "fuelLogCannotDeleteLastVehicle": "Il doit rester au moins un véhicule.",
+
+  "navEstimatedCost": "Coût estimé : {cost} €",
+  "@navEstimatedCost": { "placeholders": { "cost": { "type": "String" } } },
+
+  "stationPriceTrendTitle": "Évolution du prix (favorite)"
 }

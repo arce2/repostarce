@@ -1,7 +1,8 @@
 import '../models/fuel_type.dart';
+import '../services/vehicle_service.dart';
 
 /// Un repostaje registrado a mano por el usuario, para llevar el gasto y
-/// calcular el consumo medio del coche.
+/// calcular el consumo medio del vehículo.
 class FuelLogEntry {
   FuelLogEntry({
     required this.id,
@@ -10,6 +11,7 @@ class FuelLogEntry {
     required this.liters,
     required this.totalPrice,
     required this.kmSinceLast,
+    this.vehicleId = VehicleService.defaultVehicleId,
   });
 
   final String id;
@@ -17,6 +19,11 @@ class FuelLogEntry {
   final FuelType fuelType;
   final double liters;
   final double totalPrice;
+
+  /// A qué vehículo pertenece. Los repostajes guardados antes de que
+  /// existieran varios vehículos no tienen este campo en el JSON, así que
+  /// se les asigna el vehículo por defecto al leerlos (ver [fromJson]).
+  final String vehicleId;
 
   /// Kilómetros recorridos desde el repostaje anterior (dato que introduce
   /// el propio usuario, no viene del cuentakilómetros del coche).
@@ -36,6 +43,7 @@ class FuelLogEntry {
         'liters': liters,
         'totalPrice': totalPrice,
         'kmSinceLast': kmSinceLast,
+        'vehicleId': vehicleId,
       };
 
   factory FuelLogEntry.fromJson(Map<String, dynamic> json) => FuelLogEntry(
@@ -48,5 +56,7 @@ class FuelLogEntry {
         liters: (json['liters'] as num).toDouble(),
         totalPrice: (json['totalPrice'] as num).toDouble(),
         kmSinceLast: (json['kmSinceLast'] as num).toDouble(),
+        vehicleId:
+            json['vehicleId'] as String? ?? VehicleService.defaultVehicleId,
       );
 }

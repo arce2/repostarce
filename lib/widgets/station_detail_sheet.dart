@@ -6,7 +6,9 @@ import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../services/favorites_service.dart';
 import '../services/fuel_price_service.dart';
+import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
+import 'price_trend_chart.dart';
 
 /// Litros que se asumen para calcular el ahorro en euros de ir a una
 /// gasolinera más barata (depósito medio de un turismo).
@@ -48,12 +50,14 @@ class StationDetailSheet extends StatefulWidget {
 
 class _StationDetailSheetState extends State<StationDetailSheet> {
   final _favoritesService = FavoritesService();
+  final _priceHistoryService = PriceHistoryService();
   bool _navigating = false;
   bool _isFavorite = false;
   String? _error;
 
   GasStation? _cheaperNearby;
   double? _savings;
+  List<PricePoint> _priceHistory = [];
 
   @override
   void initState() {
@@ -62,6 +66,11 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
       if (mounted) setState(() => _isFavorite = value);
     });
     _loadCheaperNearby();
+    _priceHistoryService
+        .getHistory(widget.station.id, widget.highlightedFuel)
+        .then((history) {
+      if (mounted) setState(() => _priceHistory = history);
+    });
   }
 
   /// Busca, entre las gasolineras cercanas (15 km) que venden el mismo
@@ -260,6 +269,22 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                 }).toList(),
               ),
             ),
+            if (_priceHistory.length >= 2) ...[
+              const SizedBox(height: 18),
+              Text(
+                l10n.stationPriceTrendTitle,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              PriceTrendChart(
+                points: _priceHistory,
+                color: colorScheme.primary,
+              ),
+            ],
             if (_cheaperNearby != null && _savings != null) ...[
               const SizedBox(height: 14),
               Material(

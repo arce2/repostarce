@@ -359,4 +359,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recoAllGood =>
       'Your consumption and driving style are within the normal range. Keep it up.';
+
+  @override
+  String get fuelLogVehicleLabel => 'Vehicle';
+
+  @override
+  String get fuelLogDefaultVehicleName => 'My car';
+
+  @override
+  String get fuelLogManageVehiclesTooltip => 'Manage vehicles';
+
+  @override
+  String get fuelLogManageVehiclesTitle => 'Your vehicles';
+
+  @override
+  String get fuelLogAddVehicleHint => 'Vehicle name (e.g. Car, Motorbike)';
+
+  @override
+  String get fuelLogAddVehicleButton => 'Add';
+
+  @override
+  String get fuelLogDeleteVehicleTooltip => 'Delete vehicle';
+
+  @override
+  String get fuelLogCannotDeleteLastVehicle =>
+      'At least one vehicle must remain.';
+
+  @override
+  String navEstimatedCost(String cost) {
+    return 'Estimated cost: $cost €';
+  }
+
+  @override
+  String get stationPriceTrendTitle => 'Price trend (favourite)';
 }

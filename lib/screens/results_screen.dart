@@ -13,6 +13,7 @@ import '../models/gas_station.dart';
 import '../models/province.dart';
 import '../services/fuel_price_service.dart';
 import '../services/location_service.dart';
+import '../services/widget_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/map_markers.dart';
 import '../widgets/station_detail_sheet.dart';
@@ -44,6 +45,7 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   final _fuelService = FuelPriceService();
   final _locationService = LocationService();
+  final _widgetService = WidgetService();
   final _mapController = MapController();
 
   List<GasStation> _stations = [];
@@ -106,10 +108,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
           : await _fuelService.findByProvince(widget.province!.id);
       if (!mounted) return;
       setState(() => _stations = stations);
+      _updateWidget(stations);
     } catch (_) {
       // Fallo puntual de red: no interrumpimos al usuario con un error,
       // se reintentará en el siguiente ciclo.
     }
+  }
+
+  /// Manda al widget de pantalla de inicio (Android) la más barata de
+  /// [stations] para el combustible elegido. No hay tareas en segundo
+  /// plano: esto es lo más "en vivo" que puede estar el widget, sin
+  /// necesidad de que el usuario tenga la app abierta constantemente.
+  void _updateWidget(List<GasStation> stations) {
+    final sorted = _fuelService.sortedByPrice(stations, _selectedFuel);
+    if (sorted.isEmpty) return;
+    final price = sorted.first.priceFor(_selectedFuel);
+    if (price == null) return;
+    _widgetService.updateCheapest(sorted.first, price);
   }
 
   Future<void> _load() async {
@@ -135,6 +150,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         _stations = stations;
         _loading = false;
       });
+      _updateWidget(stations);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -316,6 +332,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       builder: (_) => NavigationScreen(
         origin: LatLng(position.latitude, position.longitude),
         station: station,
+        fuelType: _selectedFuel,
       ),
     ));
   }
@@ -428,7 +445,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         ? Icon(Icons.check_rounded,
                             size: 18, color: colorScheme.onPrimaryContainer)
                         : null,
-                    onSelected: (_) => setState(() => _selectedFuel = type),
+                    onSelected: (_) {
+                      setState(() => _selectedFuel = type);
+                      _updateWidget(_stations);
+                    },
                   );
                 },
               ),

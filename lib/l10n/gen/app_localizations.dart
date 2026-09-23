@@ -711,6 +711,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tu consumo y tu forma de conducir están dentro de lo normal. Sigue así.'**
   String get recoAllGood;
+
+  /// No description provided for @fuelLogVehicleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo'**
+  String get fuelLogVehicleLabel;
+
+  /// No description provided for @fuelLogDefaultVehicleName.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi coche'**
+  String get fuelLogDefaultVehicleName;
+
+  /// No description provided for @fuelLogManageVehiclesTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar vehículos'**
+  String get fuelLogManageVehiclesTooltip;
+
+  /// No description provided for @fuelLogManageVehiclesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus vehículos'**
+  String get fuelLogManageVehiclesTitle;
+
+  /// No description provided for @fuelLogAddVehicleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del vehículo (p. ej. Coche, Moto)'**
+  String get fuelLogAddVehicleHint;
+
+  /// No description provided for @fuelLogAddVehicleButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get fuelLogAddVehicleButton;
+
+  /// No description provided for @fuelLogDeleteVehicleTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar vehículo'**
+  String get fuelLogDeleteVehicleTooltip;
+
+  /// No description provided for @fuelLogCannotDeleteLastVehicle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiene que quedar al menos un vehículo.'**
+  String get fuelLogCannotDeleteLastVehicle;
+
+  /// No description provided for @navEstimatedCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Coste estimado: {cost} €'**
+  String navEstimatedCost(String cost);
+
+  /// No description provided for @stationPriceTrendTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Evolución de precio (favorita)'**
+  String get stationPriceTrendTitle;
 }
 
 class _AppLocalizationsDelegate

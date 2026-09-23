@@ -9,10 +9,13 @@ import 'package:latlong2/latlong.dart';
 import '../config/api_keys.dart';
 import '../l10n/error_x.dart';
 import '../l10n/l10n_x.dart';
+import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
+import '../services/fuel_log_service.dart';
 import '../services/location_service.dart';
 import '../services/routing_service.dart';
 import '../services/trip_log_service.dart';
+import '../services/vehicle_service.dart';
 import '../widgets/map_markers.dart';
 
 /// Pantalla de navegación turn-by-turn hasta la gasolinera elegida:
@@ -23,10 +26,16 @@ class NavigationScreen extends StatefulWidget {
     super.key,
     required this.origin,
     required this.station,
+    this.fuelType,
   });
 
   final LatLng origin;
   final GasStation station;
+
+  /// Combustible que se va a repostar, para estimar el coste del trayecto
+  /// a partir del consumo medio registrado en "Consumo y gastos". Si es
+  /// `null`, no se muestra la estimación.
+  final FuelType? fuelType;
 
   @override
   State<NavigationScreen> createState() => _NavigationScreenState();
@@ -36,7 +45,14 @@ class _NavigationScreenState extends State<NavigationScreen> {
   final _routingService = RoutingService();
   final _locationService = LocationService();
   final _tripLogService = TripLogService();
+  final _fuelLogService = FuelLogService();
+  final _vehicleService = VehicleService();
   final _mapController = MapController();
+
+  /// Coste estimado del trayecto (distancia × consumo medio del vehículo
+  /// activo × precio del combustible elegido). `null` si no hay consumo
+  /// registrado todavía para ese vehículo.
+  double? _estimatedCostPerKm;
 
   static const _arrivalThresholdMeters = 30.0;
   static const _offRouteThresholdMeters = 70.0;
@@ -75,7 +91,24 @@ class _NavigationScreenState extends State<NavigationScreen> {
     if (!_initialLoadStarted) {
       _initialLoadStarted = true;
       _loadRoute(widget.origin);
+      _loadEstimatedCostPerKm();
     }
+  }
+
+  Future<void> _loadEstimatedCostPerKm() async {
+    final fuelType = widget.fuelType;
+    if (fuelType == null) return;
+    final pricePerLiter = widget.station.priceFor(fuelType);
+    if (pricePerLiter == null) return;
+    final activeVehicleId = await _vehicleService.getActiveVehicleId();
+    final entries = (await _fuelLogService.getEntries())
+        .where((e) => e.vehicleId == activeVehicleId)
+        .toList();
+    final consumption = _fuelLogService.averageConsumption(entries);
+    if (consumption == null || !mounted) return;
+    setState(() {
+      _estimatedCostPerKm = (consumption / 100) * pricePerLiter;
+    });
   }
 
   @override
@@ -333,6 +366,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
           child: _TripSummaryBar(
             distanceMeters: route.totalDistanceMeters,
             durationSeconds: route.totalDurationSeconds,
+            estimatedCost: _estimatedCostPerKm != null
+                ? _estimatedCostPerKm! * (route.totalDistanceMeters / 1000)
+                : null,
             onCancel: () => Navigator.of(context).pop(),
           ),
         ),
@@ -443,11 +479,13 @@ class _TripSummaryBar extends StatelessWidget {
   const _TripSummaryBar({
     required this.distanceMeters,
     required this.durationSeconds,
+    required this.estimatedCost,
     required this.onCancel,
   });
 
   final double distanceMeters;
   final double durationSeconds;
+  final double? estimatedCost;
   final VoidCallback onCancel;
 
   @override
@@ -461,15 +499,28 @@ class _TripSummaryBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.route_rounded, size: 18, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  '${(distanceMeters / 1000).toStringAsFixed(1)} km · '
-                  '${(durationSeconds / 60).round()} min',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                Row(
+                  children: [
+                    Icon(Icons.route_rounded, size: 18, color: colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${(distanceMeters / 1000).toStringAsFixed(1)} km · '
+                      '${(durationSeconds / 60).round()} min',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
                 ),
+                if (estimatedCost != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    context.l10n.navEstimatedCost(estimatedCost!.toStringAsFixed(2)),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
               ],
             ),
             TextButton.icon(

@@ -22,8 +22,12 @@ class RecommendationService {
   final _fuelLogService = FuelLogService();
   final _tripLogService = TripLogService();
 
-  Future<List<String>> buildRecommendations(AppLocalizations l10n) async {
-    final entries = await _fuelLogService.getEntries();
+  /// [entries] ya debe venir filtrado al vehículo activo: el consumo de un
+  /// coche no debería mezclarse con el de otro.
+  Future<List<String>> buildRecommendations(
+    AppLocalizations l10n,
+    List<FuelLogEntry> entries,
+  ) async {
     final avgSpeed = await _tripLogService.averageRecentSpeedKmh();
     return _evaluate(l10n, entries, avgSpeed);
   }

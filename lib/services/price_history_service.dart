@@ -4,6 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/fuel_type.dart';
 
+/// Un precio conocido de un día concreto, para dibujar la evolución.
+class PricePoint {
+  PricePoint(this.date, this.price);
+  final DateTime date;
+  final double price;
+}
+
 /// Guarda en el dispositivo un histórico ligero (un precio por día, hasta
 /// 30 días) de cada gasolinera+combustible que se haya consultado, para
 /// poder mostrar si ha subido o bajado desde la última vez que se miró.
@@ -65,5 +72,23 @@ class PriceHistoryService {
       await prefs.setString(_prefsKey, jsonEncode(all));
     }
     return previous;
+  }
+
+  /// Historial completo (hasta 30 puntos) para dibujar la evolución del
+  /// precio de una gasolinera+combustible. Vacío si nunca se ha registrado
+  /// (p. ej. nunca se marcó como favorita).
+  Future<List<PricePoint>> getHistory(String stationId, FuelType type) async {
+    final prefs = await SharedPreferences.getInstance();
+    final all = await _readAll(prefs);
+    final key = _keyFor(stationId, type);
+    final history =
+        ((all[key] as List<dynamic>?) ?? const []).cast<Map<String, dynamic>>();
+    return history.map((entry) {
+      final parts = (entry['d'] as String).split('-').map(int.parse).toList();
+      return PricePoint(
+        DateTime(parts[0], parts[1], parts[2]),
+        (entry['p'] as num).toDouble(),
+      );
+    }).toList();
   }
 }

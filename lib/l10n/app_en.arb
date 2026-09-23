@@ -131,5 +131,19 @@
   "@recoHighSpeed": { "placeholders": { "speed": { "type": "String" } } },
   "recoLowSpeedHighConsumption": "Your recent trips are short and at a low average speed ({speed} km/h), which tends to spike city consumption. Bundling errands into one trip can help if that's an option.",
   "@recoLowSpeedHighConsumption": { "placeholders": { "speed": { "type": "String" } } },
-  "recoAllGood": "Your consumption and driving style are within the normal range. Keep it up."
+  "recoAllGood": "Your consumption and driving style are within the normal range. Keep it up.",
+
+  "fuelLogVehicleLabel": "Vehicle",
+  "fuelLogDefaultVehicleName": "My car",
+  "fuelLogManageVehiclesTooltip": "Manage vehicles",
+  "fuelLogManageVehiclesTitle": "Your vehicles",
+  "fuelLogAddVehicleHint": "Vehicle name (e.g. Car, Motorbike)",
+  "fuelLogAddVehicleButton": "Add",
+  "fuelLogDeleteVehicleTooltip": "Delete vehicle",
+  "fuelLogCannotDeleteLastVehicle": "At least one vehicle must remain.",
+
+  "navEstimatedCost": "Estimated cost: {cost} €",
+  "@navEstimatedCost": { "placeholders": { "cost": { "type": "String" } } },
+
+  "stationPriceTrendTitle": "Price trend (favourite)"
 }
