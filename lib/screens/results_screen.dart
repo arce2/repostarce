@@ -15,6 +15,7 @@ import '../services/fuel_price_service.dart';
 import '../services/location_service.dart';
 import '../services/widget_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_number_text.dart';
 import '../widgets/map_markers.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
@@ -927,10 +928,18 @@ class _ExtremeCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              Text(
-                price != null ? '${price.toStringAsFixed(3)} €' : '—',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: color),
-              ),
+              price != null
+                  ? AnimatedNumberText(
+                      value: price,
+                      formatter: (v) => '${v.toStringAsFixed(3)} €',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 16, color: color),
+                    )
+                  : Text(
+                      '—',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 16, color: color),
+                    ),
             ],
           ),
         ),

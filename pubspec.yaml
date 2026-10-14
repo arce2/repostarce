@@ -49,6 +49,15 @@ dependencies:
   # ver README).
   home_widget: ^0.10.0
 
+  # Copia de seguridad: exportar todos los datos locales a un archivo y
+  # compartirlo (share_plus). path_provider da el directorio temporal donde
+  # escribir el archivo antes de compartirlo. La importacion se hace
+  # pegando el contenido del archivo (sin selector de archivos: el plugin
+  # file_picker trae un compileSdk desactualizado en su propio codigo,
+  # incompatible con el SDK de Android que exige el resto de plugins).
+  share_plus: ^10.0.0
+  path_provider: ^2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

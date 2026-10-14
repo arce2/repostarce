@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// **'Eliminar'**
   String get commonDelete;
 
+  /// No description provided for @commonOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar'**
+  String get commonOk;
+
   /// No description provided for @appTabHome.
   ///
   /// In es, this message translates to:
@@ -370,6 +376,36 @@ abstract class AppLocalizations {
   /// **'Volver a la lista'**
   String get navBackToList;
 
+  /// No description provided for @navCheaperOnRouteTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Más baratas en tu ruta'**
+  String get navCheaperOnRouteTooltip;
+
+  /// No description provided for @navCheaperOnRouteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Más baratas en tu ruta'**
+  String get navCheaperOnRouteTitle;
+
+  /// No description provided for @navCheaperOnRouteSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasolineras más baratas que te pillan de camino a tu destino.'**
+  String get navCheaperOnRouteSubtitle;
+
+  /// No description provided for @navCheaperOnRouteEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ninguna más barata de camino. Esta ya es una buena opción.'**
+  String get navCheaperOnRouteEmpty;
+
+  /// No description provided for @navCheaperOnRouteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha podido buscar gasolineras en la ruta. Inténtalo de nuevo.'**
+  String get navCheaperOnRouteError;
+
   /// No description provided for @stationCheapestBadge.
   ///
   /// In es, this message translates to:
@@ -568,6 +604,96 @@ abstract class AppLocalizations {
   /// **'Français'**
   String get settingsLanguageFrench;
 
+  /// No description provided for @settingsBackupLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia de seguridad'**
+  String get settingsBackupLabel;
+
+  /// No description provided for @settingsBackupHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos solo están en este dispositivo. Exporta una copia de vez en cuando por si cambias de móvil.'**
+  String get settingsBackupHint;
+
+  /// No description provided for @settingsBackupExport.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar datos'**
+  String get settingsBackupExport;
+
+  /// No description provided for @settingsBackupImport.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar datos'**
+  String get settingsBackupImport;
+
+  /// No description provided for @settingsBackupImportPasteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pegar copia de seguridad'**
+  String get settingsBackupImportPasteTitle;
+
+  /// No description provided for @settingsBackupImportPasteHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Abre el archivo exportado con un editor de texto o tus notas, copia todo su contenido y pégalo aquí.'**
+  String get settingsBackupImportPasteHint;
+
+  /// No description provided for @settingsBackupShareText.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia de seguridad de Gasly'**
+  String get settingsBackupShareText;
+
+  /// No description provided for @settingsBackupExportError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha podido exportar la copia de seguridad.'**
+  String get settingsBackupExportError;
+
+  /// No description provided for @settingsBackupImportErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivo no válido'**
+  String get settingsBackupImportErrorTitle;
+
+  /// No description provided for @settingsBackupImportErrorMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Este archivo no es una copia de seguridad de Gasly, o está dañado.'**
+  String get settingsBackupImportErrorMessage;
+
+  /// No description provided for @settingsBackupImportConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Importar datos?'**
+  String get settingsBackupImportConfirmTitle;
+
+  /// No description provided for @settingsBackupImportConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto reemplazará tus vehículos, repostajes y favoritas actuales por los de la copia de seguridad. No se puede deshacer.'**
+  String get settingsBackupImportConfirmMessage;
+
+  /// No description provided for @settingsBackupImportConfirmButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar y reemplazar'**
+  String get settingsBackupImportConfirmButton;
+
+  /// No description provided for @settingsBackupImportDoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos importados'**
+  String get settingsBackupImportDoneTitle;
+
+  /// No description provided for @settingsBackupImportDoneMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cierra y vuelve a abrir la app para ver los datos actualizados.'**
+  String get settingsBackupImportDoneMessage;
+
   /// No description provided for @settingsLegalLabel.
   ///
   /// In es, this message translates to:
@@ -681,6 +807,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{liters} L · {km} km · {price} €'**
   String fuelLogEntrySubtitle(String liters, String km, String price);
+
+  /// No description provided for @fuelLogEntryInvoiceBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Factura nº {number}'**
+  String fuelLogEntryInvoiceBadge(String number);
+
+  /// No description provided for @fuelLogEntryInvoiceBadgeNoNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Con datos de facturación'**
+  String get fuelLogEntryInvoiceBadgeNoNumber;
+
+  /// No description provided for @fuelLogFormInvoiceSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos de facturación'**
+  String get fuelLogFormInvoiceSectionTitle;
+
+  /// No description provided for @fuelLogFormInvoiceSectionSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional, para desgravar como autónomo/empresa'**
+  String get fuelLogFormInvoiceSectionSubtitle;
+
+  /// No description provided for @fuelLogFormInvoiceNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Nº de factura o ticket'**
+  String get fuelLogFormInvoiceNumber;
+
+  /// No description provided for @fuelLogFormIssuerName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la gasolinera (razón social)'**
+  String get fuelLogFormIssuerName;
+
+  /// No description provided for @fuelLogFormIssuerTaxId.
+  ///
+  /// In es, this message translates to:
+  /// **'CIF/NIF de la gasolinera'**
+  String get fuelLogFormIssuerTaxId;
+
+  /// No description provided for @fuelLogFormVatRate.
+  ///
+  /// In es, this message translates to:
+  /// **'% IVA aplicado'**
+  String get fuelLogFormVatRate;
 
   /// No description provided for @fuelLogDeleteTooltip.
   ///

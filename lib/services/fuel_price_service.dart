@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 
 import '../l10n/gen/app_localizations.dart';
 import '../models/fuel_type.dart';
@@ -110,6 +111,72 @@ class FuelPriceService {
     final withPrice = stations.where((s) => s.priceFor(type) != null).toList()
       ..sort((a, b) => a.priceFor(type)!.compareTo(b.priceFor(type)!));
     return withPrice;
+  }
+
+  /// Gasolineras a menos de [corridorKm] de la línea de ruta [polyline] (no
+  /// solo las más cercanas a un único punto, sino las que están "de
+  /// camino"). [GasStation.distanceKm] queda relleno con la distancia a la
+  /// ruta, no al origen ni al destino.
+  ///
+  /// Con miles de estaciones y rutas largas (cientos de puntos), comparar
+  /// cada estación contra cada punto de la ruta sería caro: primero se
+  /// descarta por caja delimitadora y luego se compara solo contra una
+  /// muestra de la polilínea.
+  Future<List<GasStation>> findAlongRoute({
+    required List<LatLng> polyline,
+    double corridorKm = 2.5,
+  }) async {
+    if (polyline.isEmpty) return [];
+    final all = await _fetchAllStations();
+    final sampled = _samplePolyline(polyline, maxPoints: 120);
+
+    var minLat = sampled.first.latitude, maxLat = sampled.first.latitude;
+    var minLng = sampled.first.longitude, maxLng = sampled.first.longitude;
+    for (final p in sampled) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    // ~111 km por grado de latitud; de sobra de margen para no descartar
+    // por error ninguna estación que luego sí entraría en el corredor.
+    final marginDeg = (corridorKm / 111.0) * 1.5;
+    minLat -= marginDeg;
+    maxLat += marginDeg;
+    minLng -= marginDeg;
+    maxLng += marginDeg;
+
+    final matches = <GasStation>[];
+    for (final station in all) {
+      if (station.latitude < minLat ||
+          station.latitude > maxLat ||
+          station.longitude < minLng ||
+          station.longitude > maxLng) {
+        continue;
+      }
+      double? best;
+      for (final p in sampled) {
+        final d = station.distanceTo(p.latitude, p.longitude);
+        if (best == null || d < best) best = d;
+        if (best <= corridorKm) break;
+      }
+      if (best != null && best <= corridorKm) {
+        station.distanceKm = best;
+        matches.add(station);
+      }
+    }
+    return matches;
+  }
+
+  List<LatLng> _samplePolyline(List<LatLng> polyline, {required int maxPoints}) {
+    if (polyline.length <= maxPoints) return polyline;
+    final step = polyline.length / maxPoints;
+    final sampled = <LatLng>[];
+    for (var i = 0.0; i < polyline.length; i += step) {
+      sampled.add(polyline[i.floor()]);
+    }
+    if (sampled.last != polyline.last) sampled.add(polyline.last);
+    return sampled;
   }
 }
 

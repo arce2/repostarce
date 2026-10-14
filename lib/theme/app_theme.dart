@@ -129,6 +129,44 @@ class AppTheme {
         tileColor: colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+      // Misma transición (fundido + ligero deslizamiento hacia arriba) en
+      // Android e iOS, en vez de la animación por defecto de cada
+      // plataforma: da una identidad visual propia a la app sin tocar la
+      // duración estándar (300ms), así que no ralentiza la navegación.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _FadeThroughPageTransitionsBuilder(),
+          TargetPlatform.iOS: _FadeThroughPageTransitionsBuilder(),
+        },
+      ),
+    );
+  }
+}
+
+class _FadeThroughPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _FadeThroughPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final entering = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+    final leaving =
+        CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInCubic);
+    return FadeTransition(
+      opacity: entering,
+      child: SlideTransition(
+        position: Tween<Offset>(begin: const Offset(0, 0.035), end: Offset.zero)
+            .animate(entering),
+        child: FadeTransition(
+          opacity: Tween<double>(begin: 1, end: 0.92).animate(leaving),
+          child: child,
+        ),
+      ),
     );
   }
 }

@@ -4,32 +4,68 @@ import '../theme/app_theme.dart';
 
 /// Punto que marca la posición del usuario en el mapa (azul, como en la
 /// mayoría de apps de navegación, para distinguirlo claramente de las
-/// gasolineras).
-class UserLocationDot extends StatelessWidget {
+/// gasolineras), con un anillo tipo "radar" que pulsa hacia fuera para dar
+/// sensación de posición en vivo. La animación es puramente decorativa
+/// (un solo AnimationController, sin rebuilds del resto del mapa), así que
+/// no afecta al rendimiento de la navegación.
+class UserLocationDot extends StatefulWidget {
   const UserLocationDot({super.key, this.color = const Color(0xFF2E6ADE)});
 
   final Color color;
 
   @override
+  State<UserLocationDot> createState() => _UserLocationDotState();
+}
+
+class _UserLocationDotState extends State<UserLocationDot>
+    with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.18),
-      ),
+    return Stack(
       alignment: Alignment.center,
-      child: Container(
-        width: 18,
-        height: 18,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color,
-          border: Border.all(color: Colors.white, width: 3),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 4),
-          ],
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final t = _controller.value;
+            return Opacity(
+              opacity: (1 - t).clamp(0.0, 1.0) * 0.5,
+              child: Transform.scale(
+                scale: 0.4 + t * 1.1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.color.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-      ),
+        Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.color,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 4),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

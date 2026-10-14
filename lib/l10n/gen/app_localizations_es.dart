@@ -24,6 +24,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonDelete => 'Eliminar';
 
   @override
+  String get commonOk => 'Aceptar';
+
+  @override
   String get appTabHome => 'Buscar';
 
   @override
@@ -157,6 +160,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navBackToList => 'Volver a la lista';
 
   @override
+  String get navCheaperOnRouteTooltip => 'Más baratas en tu ruta';
+
+  @override
+  String get navCheaperOnRouteTitle => 'Más baratas en tu ruta';
+
+  @override
+  String get navCheaperOnRouteSubtitle =>
+      'Gasolineras más baratas que te pillan de camino a tu destino.';
+
+  @override
+  String get navCheaperOnRouteEmpty =>
+      'No hay ninguna más barata de camino. Esta ya es una buena opción.';
+
+  @override
+  String get navCheaperOnRouteError =>
+      'No se ha podido buscar gasolineras en la ruta. Inténtalo de nuevo.';
+
+  @override
   String get stationCheapestBadge => 'más barata';
 
   @override
@@ -277,6 +298,57 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsLanguageFrench => 'Français';
 
   @override
+  String get settingsBackupLabel => 'Copia de seguridad';
+
+  @override
+  String get settingsBackupHint =>
+      'Tus datos solo están en este dispositivo. Exporta una copia de vez en cuando por si cambias de móvil.';
+
+  @override
+  String get settingsBackupExport => 'Exportar datos';
+
+  @override
+  String get settingsBackupImport => 'Importar datos';
+
+  @override
+  String get settingsBackupImportPasteTitle => 'Pegar copia de seguridad';
+
+  @override
+  String get settingsBackupImportPasteHint =>
+      'Abre el archivo exportado con un editor de texto o tus notas, copia todo su contenido y pégalo aquí.';
+
+  @override
+  String get settingsBackupShareText => 'Copia de seguridad de Gasly';
+
+  @override
+  String get settingsBackupExportError =>
+      'No se ha podido exportar la copia de seguridad.';
+
+  @override
+  String get settingsBackupImportErrorTitle => 'Archivo no válido';
+
+  @override
+  String get settingsBackupImportErrorMessage =>
+      'Este archivo no es una copia de seguridad de Gasly, o está dañado.';
+
+  @override
+  String get settingsBackupImportConfirmTitle => '¿Importar datos?';
+
+  @override
+  String get settingsBackupImportConfirmMessage =>
+      'Esto reemplazará tus vehículos, repostajes y favoritas actuales por los de la copia de seguridad. No se puede deshacer.';
+
+  @override
+  String get settingsBackupImportConfirmButton => 'Importar y reemplazar';
+
+  @override
+  String get settingsBackupImportDoneTitle => 'Datos importados';
+
+  @override
+  String get settingsBackupImportDoneMessage =>
+      'Cierra y vuelve a abrir la app para ver los datos actualizados.';
+
+  @override
   String get settingsLegalLabel => 'Legal';
 
   @override
@@ -335,6 +407,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String fuelLogEntrySubtitle(String liters, String km, String price) {
     return '$liters L · $km km · $price €';
   }
+
+  @override
+  String fuelLogEntryInvoiceBadge(String number) {
+    return 'Factura nº $number';
+  }
+
+  @override
+  String get fuelLogEntryInvoiceBadgeNoNumber => 'Con datos de facturación';
+
+  @override
+  String get fuelLogFormInvoiceSectionTitle => 'Datos de facturación';
+
+  @override
+  String get fuelLogFormInvoiceSectionSubtitle =>
+      'Opcional, para desgravar como autónomo/empresa';
+
+  @override
+  String get fuelLogFormInvoiceNumber => 'Nº de factura o ticket';
+
+  @override
+  String get fuelLogFormIssuerName => 'Nombre de la gasolinera (razón social)';
+
+  @override
+  String get fuelLogFormIssuerTaxId => 'CIF/NIF de la gasolinera';
+
+  @override
+  String get fuelLogFormVatRate => '% IVA aplicado';
 
   @override
   String get fuelLogDeleteTooltip => 'Eliminar repostaje';

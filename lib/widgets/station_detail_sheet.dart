@@ -8,6 +8,7 @@ import '../services/favorites_service.dart';
 import '../services/fuel_price_service.dart';
 import '../services/price_history_service.dart';
 import '../theme/app_theme.dart';
+import 'animated_number_text.dart';
 import 'price_trend_chart.dart';
 
 /// Litros que se asumen para calcular el ahorro en euros de ir a una
@@ -252,8 +253,9 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
                             ),
                           ),
                         ),
-                        Text(
-                          '${station.priceFor(type)!.toStringAsFixed(3)} €',
+                        AnimatedNumberText(
+                          value: station.priceFor(type)!,
+                          formatter: (v) => '${v.toStringAsFixed(3)} €',
                           style: TextStyle(
                             fontWeight:
                                 highlighted ? FontWeight.w800 : FontWeight.w600,
@@ -339,21 +341,34 @@ class _StationDetailSheetState extends State<StationDetailSheet> {
               ),
               const SizedBox(height: 12),
             ],
-            FilledButton.icon(
-              onPressed: _navigating ? null : _handleNavigate,
-              icon: _navigating
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colorScheme.onPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.navigation_rounded),
-              label: Text(_navigating
-                  ? l10n.stationCalculatingRoute
-                  : l10n.stationNavigateButton),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: FilledButton.icon(
+                onPressed: _navigating ? null : _handleNavigate,
+                icon: _navigating
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.navigation_rounded),
+                label: Text(_navigating
+                    ? l10n.stationCalculatingRoute
+                    : l10n.stationNavigateButton),
+              ),
             ),
           ],
         ),

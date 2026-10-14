@@ -12,11 +12,13 @@ import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../services/fuel_log_service.dart';
+import '../services/fuel_price_service.dart';
 import '../services/location_service.dart';
 import '../services/routing_service.dart';
 import '../services/trip_log_service.dart';
 import '../services/vehicle_service.dart';
 import '../widgets/map_markers.dart';
+import '../widgets/station_list_tile.dart';
 
 /// Pantalla de navegación turn-by-turn hasta la gasolinera elegida:
 /// dibuja la ruta, sigue la posición del usuario en vivo y va mostrando
@@ -46,6 +48,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   final _locationService = LocationService();
   final _tripLogService = TripLogService();
   final _fuelLogService = FuelLogService();
+  final _fuelPriceService = FuelPriceService();
   final _vehicleService = VehicleService();
   final _mapController = MapController();
 
@@ -215,6 +218,39 @@ class _NavigationScreenState extends State<NavigationScreen> {
     return min;
   }
 
+  /// Busca gasolineras más baratas que el destino actual pero que están "de
+  /// camino" (cerca de la ruta ya trazada), y deja elegir una para
+  /// recalcular la navegación hacia ella en vez de quedarse con la original.
+  Future<void> _showCheaperAlongRoute() async {
+    final fuelType = widget.fuelType;
+    final route = _route;
+    if (fuelType == null || route == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => _CheaperAlongRouteSheet(
+        fuelPriceService: _fuelPriceService,
+        polyline: route.polyline,
+        fuelType: fuelType,
+        currentStationId: widget.station.id,
+        currentPrice: widget.station.priceFor(fuelType),
+        onSelect: (station) {
+          Navigator.of(sheetContext).pop();
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => NavigationScreen(
+                origin: _currentPosition ?? widget.origin,
+                station: station,
+                fuelType: fuelType,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   double _angleForModifier(String modifier) {
     switch (modifier) {
       case 'straight':
@@ -248,6 +284,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ? widget.station.brand
             : l10n.navGasStationFallback)),
         actions: [
+          if (widget.fuelType != null && _route != null)
+            IconButton(
+              icon: const Icon(Icons.local_gas_station_rounded),
+              tooltip: l10n.navCheaperOnRouteTooltip,
+              onPressed: _showCheaperAlongRoute,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: l10n.navRecalcTooltip,
@@ -584,6 +626,135 @@ class _ArrivalOverlay extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Hoja que busca gasolineras más baratas que el destino actual pero
+/// cercanas a la ruta ya trazada (no solo las más cercanas al usuario), y
+/// deja elegir una para navegar hacia ella en su lugar.
+class _CheaperAlongRouteSheet extends StatefulWidget {
+  const _CheaperAlongRouteSheet({
+    required this.fuelPriceService,
+    required this.polyline,
+    required this.fuelType,
+    required this.currentStationId,
+    required this.currentPrice,
+    required this.onSelect,
+  });
+
+  final FuelPriceService fuelPriceService;
+  final List<LatLng> polyline;
+  final FuelType fuelType;
+  final String currentStationId;
+  final double? currentPrice;
+  final ValueChanged<GasStation> onSelect;
+
+  @override
+  State<_CheaperAlongRouteSheet> createState() =>
+      _CheaperAlongRouteSheetState();
+}
+
+class _CheaperAlongRouteSheetState extends State<_CheaperAlongRouteSheet> {
+  List<GasStation>? _results;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final matches = await widget.fuelPriceService
+          .findAlongRoute(polyline: widget.polyline);
+      final cheaperOnes = matches.where((s) {
+        if (s.id == widget.currentStationId) return false;
+        final price = s.priceFor(widget.fuelType);
+        if (price == null) return false;
+        if (widget.currentPrice == null) return true;
+        return price < widget.currentPrice!;
+      }).toList();
+      final sorted =
+          widget.fuelPriceService.sortedByPrice(cheaperOnes, widget.fuelType);
+      if (!mounted) return;
+      setState(() => _results = sorted.take(10).toList());
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = context.l10n.navCheaperOnRouteError);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              l10n.navCheaperOnRouteTitle,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.navCheaperOnRouteSubtitle,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(_error!, textAlign: TextAlign.center),
+              )
+            else if (_results == null)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_results!.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(l10n.navCheaperOnRouteEmpty,
+                    textAlign: TextAlign.center),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _results!.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final station = _results![index];
+                    return StationListTile(
+                      station: station,
+                      fuelType: widget.fuelType,
+                      isCheapest: index == 0,
+                      onTap: () => widget.onSelect(station),
+                    );
+                  },
+                ),
+              ),
+          ],
         ),
       ),
     );

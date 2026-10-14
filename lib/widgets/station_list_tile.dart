@@ -4,6 +4,7 @@ import '../l10n/l10n_x.dart';
 import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../theme/app_theme.dart';
+import 'animated_number_text.dart';
 
 /// Fila de la lista de resultados: marca, dirección, distancia y precio
 /// del combustible elegido, marcando si es la más barata o la más cara.
@@ -145,14 +146,24 @@ class StationListTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    price != null ? '${price.toStringAsFixed(3)} €' : '—',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                      color: highlighted ? accent : colorScheme.onSurface,
-                    ),
-                  ),
+                  price != null
+                      ? AnimatedNumberText(
+                          value: price,
+                          formatter: (v) => '${v.toStringAsFixed(3)} €',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: highlighted ? accent : colorScheme.onSurface,
+                          ),
+                        )
+                      : Text(
+                          '—',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: highlighted ? accent : colorScheme.onSurface,
+                          ),
+                        ),
                   if (trendDelta != null && trendDelta.abs() >= 0.001)
                     Row(
                       mainAxisSize: MainAxisSize.min,

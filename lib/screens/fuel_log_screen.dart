@@ -9,6 +9,7 @@ import '../services/fuel_log_service.dart';
 import '../services/recommendation_service.dart';
 import '../services/vehicle_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_number_text.dart';
 
 String _vehicleLabel(Vehicle vehicle, AppLocalizations l10n) =>
     vehicle.name.isEmpty ? l10n.fuelLogDefaultVehicleName : vehicle.name;
@@ -169,6 +170,9 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                           value: avgConsumption != null
                               ? '${avgConsumption.toStringAsFixed(1)} ${l10n.fuelLogConsumptionUnit}'
                               : '—',
+                          numericValue: avgConsumption,
+                          numericFormatter: (v) =>
+                              '${v.toStringAsFixed(1)} ${l10n.fuelLogConsumptionUnit}',
                           color: AppTheme.cheapestColor,
                         ),
                       ),
@@ -178,6 +182,8 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                           icon: Icons.payments_rounded,
                           label: l10n.fuelLogTotalSpent,
                           value: '${totalSpent.toStringAsFixed(2)} €',
+                          numericValue: totalSpent,
+                          numericFormatter: (v) => '${v.toStringAsFixed(2)} €',
                           color: colorScheme.primary,
                         ),
                       ),
@@ -235,6 +241,8 @@ class _StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    this.numericValue,
+    this.numericFormatter,
   });
 
   final IconData icon;
@@ -242,8 +250,16 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
 
+  /// Si se indica junto a [numericFormatter], el valor se anima suavemente
+  /// al cambiar en vez de pintarse de golpe. Si es null, se usa [value] tal
+  /// cual (p. ej. cuando no hay dato todavía, "—").
+  final double? numericValue;
+  final String Function(double)? numericFormatter;
+
   @override
   Widget build(BuildContext context) {
+    final numeric = numericValue;
+    final format = numericFormatter;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -256,11 +272,18 @@ class _StatCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 18, color: color),
-          ),
+          numeric != null && format != null
+              ? AnimatedNumberText(
+                  value: numeric,
+                  formatter: format,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 18, color: color),
+                )
+              : Text(
+                  value,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 18, color: color),
+                ),
           const SizedBox(height: 2),
           Text(
             label,
@@ -398,6 +421,19 @@ class _FuelLogTile extends StatelessWidget {
                   ),
                   style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
                 ),
+                if (entry.hasInvoiceData) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.invoiceNumber != null
+                        ? l10n.fuelLogEntryInvoiceBadge(entry.invoiceNumber!)
+                        : l10n.fuelLogEntryInvoiceBadgeNoNumber,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -426,21 +462,35 @@ class _AddFuelLogSheetState extends State<_AddFuelLogSheet> {
   final _litersController = TextEditingController();
   final _priceController = TextEditingController();
   final _kmController = TextEditingController();
+  final _invoiceNumberController = TextEditingController();
+  final _issuerNameController = TextEditingController();
+  final _issuerTaxIdController = TextEditingController();
+  final _vatRateController = TextEditingController(text: '21');
   final _fuelLogService = FuelLogService();
 
   FuelType _fuelType = FuelType.gasolina95;
   bool _saving = false;
+  bool _showInvoiceSection = false;
 
   @override
   void dispose() {
     _litersController.dispose();
     _priceController.dispose();
     _kmController.dispose();
+    _invoiceNumberController.dispose();
+    _issuerNameController.dispose();
+    _issuerTaxIdController.dispose();
+    _vatRateController.dispose();
     super.dispose();
   }
 
   double? _parse(String text) =>
       double.tryParse(text.trim().replaceAll(',', '.'));
+
+  String? _nullIfEmpty(String text) {
+    final trimmed = text.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -453,6 +503,17 @@ class _AddFuelLogSheetState extends State<_AddFuelLogSheet> {
       totalPrice: _parse(_priceController.text)!,
       kmSinceLast: _parse(_kmController.text)!,
       vehicleId: widget.vehicleId,
+      invoiceNumber: _showInvoiceSection
+          ? _nullIfEmpty(_invoiceNumberController.text)
+          : null,
+      issuerName: _showInvoiceSection
+          ? _nullIfEmpty(_issuerNameController.text)
+          : null,
+      issuerTaxId: _showInvoiceSection
+          ? _nullIfEmpty(_issuerTaxIdController.text)
+          : null,
+      vatRatePercent:
+          _showInvoiceSection ? _parse(_vatRateController.text) : null,
     );
     await _fuelLogService.addEntry(entry);
     if (mounted) Navigator.of(context).pop(true);
@@ -525,6 +586,42 @@ class _AddFuelLogSheetState extends State<_AddFuelLogSheet> {
                 decoration: InputDecoration(labelText: l10n.fuelLogFormKm),
                 validator: (v) => _validateNumber(v, l10n),
               ),
+              const SizedBox(height: 4),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.fuelLogFormInvoiceSectionTitle),
+                subtitle: Text(l10n.fuelLogFormInvoiceSectionSubtitle),
+                value: _showInvoiceSection,
+                onChanged: (v) => setState(() => _showInvoiceSection = v),
+              ),
+              if (_showInvoiceSection) ...[
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _invoiceNumberController,
+                  decoration:
+                      InputDecoration(labelText: l10n.fuelLogFormInvoiceNumber),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _issuerNameController,
+                  decoration:
+                      InputDecoration(labelText: l10n.fuelLogFormIssuerName),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _issuerTaxIdController,
+                  decoration:
+                      InputDecoration(labelText: l10n.fuelLogFormIssuerTaxId),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _vatRateController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration:
+                      InputDecoration(labelText: l10n.fuelLogFormVatRate),
+                ),
+              ],
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,

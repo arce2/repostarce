@@ -24,6 +24,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDelete => 'Delete';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
   String get appTabHome => 'Search';
 
   @override
@@ -157,6 +160,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navBackToList => 'Back to the list';
 
   @override
+  String get navCheaperOnRouteTooltip => 'Cheaper on your route';
+
+  @override
+  String get navCheaperOnRouteTitle => 'Cheaper on your route';
+
+  @override
+  String get navCheaperOnRouteSubtitle =>
+      'Cheaper gas stations that are on the way to your destination.';
+
+  @override
+  String get navCheaperOnRouteEmpty =>
+      'None cheaper on the way. This one is already a good option.';
+
+  @override
+  String get navCheaperOnRouteError =>
+      'Couldn\'t search for gas stations on the route. Please try again.';
+
+  @override
   String get stationCheapestBadge => 'cheapest';
 
   @override
@@ -276,6 +297,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageFrench => 'Français';
 
   @override
+  String get settingsBackupLabel => 'Backup';
+
+  @override
+  String get settingsBackupHint =>
+      'Your data only lives on this device. Export a copy now and then in case you switch phones.';
+
+  @override
+  String get settingsBackupExport => 'Export data';
+
+  @override
+  String get settingsBackupImport => 'Import data';
+
+  @override
+  String get settingsBackupImportPasteTitle => 'Paste backup';
+
+  @override
+  String get settingsBackupImportPasteHint =>
+      'Open the exported file with a text editor or your notes app, copy its whole content and paste it here.';
+
+  @override
+  String get settingsBackupShareText => 'Gasly backup';
+
+  @override
+  String get settingsBackupExportError => 'Couldn\'t export the backup.';
+
+  @override
+  String get settingsBackupImportErrorTitle => 'Invalid file';
+
+  @override
+  String get settingsBackupImportErrorMessage =>
+      'This file isn\'t a Gasly backup, or it\'s corrupted.';
+
+  @override
+  String get settingsBackupImportConfirmTitle => 'Import data?';
+
+  @override
+  String get settingsBackupImportConfirmMessage =>
+      'This will replace your current vehicles, fill-ups and favourites with the ones in the backup. This can\'t be undone.';
+
+  @override
+  String get settingsBackupImportConfirmButton => 'Import and replace';
+
+  @override
+  String get settingsBackupImportDoneTitle => 'Data imported';
+
+  @override
+  String get settingsBackupImportDoneMessage =>
+      'Close and reopen the app to see the updated data.';
+
+  @override
   String get settingsLegalLabel => 'Legal';
 
   @override
@@ -334,6 +405,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String fuelLogEntrySubtitle(String liters, String km, String price) {
     return '$liters L · $km km · $price €';
   }
+
+  @override
+  String fuelLogEntryInvoiceBadge(String number) {
+    return 'Invoice nr. $number';
+  }
+
+  @override
+  String get fuelLogEntryInvoiceBadgeNoNumber => 'Has billing data';
+
+  @override
+  String get fuelLogFormInvoiceSectionTitle => 'Billing data';
+
+  @override
+  String get fuelLogFormInvoiceSectionSubtitle =>
+      'Optional, for tax deduction as self-employed/business';
+
+  @override
+  String get fuelLogFormInvoiceNumber => 'Invoice/receipt number';
+
+  @override
+  String get fuelLogFormIssuerName => 'Gas station name (legal name)';
+
+  @override
+  String get fuelLogFormIssuerTaxId => 'Gas station tax ID';
+
+  @override
+  String get fuelLogFormVatRate => 'VAT rate applied (%)';
 
   @override
   String get fuelLogDeleteTooltip => 'Delete fill-up';
