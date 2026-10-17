@@ -9,12 +9,15 @@ import '../models/fuel_type.dart';
 import '../models/gas_station.dart';
 import '../models/province.dart';
 import '../services/favorites_service.dart';
+import '../services/fuel_log_service.dart';
 import '../services/fuel_price_service.dart';
 import '../services/locale_service.dart';
 import '../services/location_service.dart';
 import '../services/price_alert_service.dart';
 import '../services/price_history_service.dart';
+import '../services/vehicle_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/home_stats_ring.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
 import 'fuel_log_screen.dart';
@@ -38,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _locationService = LocationService();
   final _favoritesService = FavoritesService();
   final _fuelService = FuelPriceService();
+  final _fuelLogService = FuelLogService();
+  final _vehicleService = VehicleService();
   final _priceHistoryService = PriceHistoryService();
   final _priceAlertService = PriceAlertService();
 
@@ -47,6 +52,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   List<GasStation> _favoriteStations = [];
   bool _loadingFavorites = true;
+
+  double? _monthlySpend;
+  double? _monthlySavings;
+  DateTime? _lastFillUpDate;
+  DateTime? _nextFillUpEstimate;
 
   /// Precio del día distinto más reciente registrado para cada favorita
   /// (por id de gasolinera), para mostrar la tendencia ↑/↓.
@@ -63,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadFavorites();
+    _loadMonthlyStats();
     _refreshTimer = Timer.periodic(
       const Duration(minutes: 10),
       (_) => _loadFavorites(silent: true, forceRefresh: true),
@@ -130,6 +141,52 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           newPrice: price,
         );
       }
+    }
+  }
+
+  /// Gasto y ahorro del mes en curso, y cuándo fue/tocará el próximo
+  /// repostaje, para el panel circular de la portada. Todo referido al
+  /// vehículo activo (el mismo que ve "Consumo y gastos" por defecto): no
+  /// tendría sentido estimar el próximo repostaje del coche mezclando
+  /// kilómetros de la moto.
+  Future<void> _loadMonthlyStats() async {
+    final allEntries = await _fuelLogService.getEntries();
+    if (allEntries.isEmpty) return;
+
+    final activeVehicleId = await _vehicleService.getActiveVehicleId();
+    final entries =
+        allEntries.where((e) => e.vehicleId == activeVehicleId).toList();
+    if (entries.isEmpty) return;
+
+    final now = DateTime.now();
+    final monthEntries = _fuelLogService.entriesInMonth(entries, now);
+    final spend = monthEntries.isEmpty
+        ? null
+        : _fuelLogService.totalSpentInMonth(entries, now);
+    final last = _fuelLogService.lastFillUpDate(entries);
+    final daysUntilNext = _fuelLogService.estimatedDaysUntilNextFillUp(entries);
+    final nextEstimate = (last != null && daysUntilNext != null)
+        ? last.add(Duration(days: daysUntilNext.round()))
+        : null;
+
+    if (mounted) {
+      setState(() {
+        _monthlySpend = spend;
+        _lastFillUpDate = last;
+        _nextFillUpEstimate = nextEstimate;
+      });
+    }
+
+    try {
+      final nationalAverages = await _fuelService.nationalAveragePrices();
+      final savings = _fuelLogService.estimatedSavingsInMonth(
+        monthEntries,
+        nationalAverages,
+      );
+      if (mounted) setState(() => _monthlySavings = savings);
+    } catch (_) {
+      // Sin conexión: nos quedamos sin el dato de ahorro esta vez, el resto
+      // del panel (gasto, fechas) sigue funcionando igual.
     }
   }
 
@@ -206,7 +263,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _openFuelLog() {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const FuelLogScreen()));
+        .push(MaterialPageRoute(builder: (_) => const FuelLogScreen()))
+        .then((_) => _loadMonthlyStats());
   }
 
   @override
@@ -236,17 +294,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 12),
-                      Container(
-                        width: 220,
-                        height: 220,
-                        alignment: Alignment.center,
-                        child: Image.asset(
-                          'assets/icon/welcome_fox.png',
-                          width: 220,
-                          height: 220,
-                          fit: BoxFit.contain,
-                        ),
+                      const SizedBox(height: 16),
+                      HomeStatsRing(
+                        monthlySpend: _monthlySpend,
+                        monthlySavings: _monthlySavings,
+                        lastFillUpDate: _lastFillUpDate,
+                        nextFillUpEstimate: _nextFillUpEstimate,
                       ),
                       const SizedBox(height: 20),
                       Text(

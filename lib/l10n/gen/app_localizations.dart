@@ -232,6 +232,72 @@ abstract class AppLocalizations {
   /// **'Ajustes'**
   String get homeSettingsTooltip;
 
+  /// No description provided for @homeStatsMonthlySpendLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto del mes'**
+  String get homeStatsMonthlySpendLabel;
+
+  /// No description provided for @homeStatsSavingLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahorras {amount} €'**
+  String homeStatsSavingLabel(String amount);
+
+  /// No description provided for @homeStatsOverpayingLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'+{amount} € vs media'**
+  String homeStatsOverpayingLabel(String amount);
+
+  /// No description provided for @homeStatsLastFillUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Último repostaje'**
+  String get homeStatsLastFillUp;
+
+  /// No description provided for @homeStatsNextFillUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximo repostaje'**
+  String get homeStatsNextFillUp;
+
+  /// No description provided for @homeStatsNoData.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin datos'**
+  String get homeStatsNoData;
+
+  /// No description provided for @homeStatsToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get homeStatsToday;
+
+  /// No description provided for @homeStatsYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get homeStatsYesterday;
+
+  /// No description provided for @homeStatsDaysAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {days} días'**
+  String homeStatsDaysAgo(int days);
+
+  /// No description provided for @homeStatsDaysUntil.
+  ///
+  /// In es, this message translates to:
+  /// **'En ~{days} días'**
+  String homeStatsDaysUntil(int days);
+
+  /// No description provided for @homeStatsAnyDayNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquier día'**
+  String get homeStatsAnyDayNow;
+
   /// No description provided for @resultsTitleNearby.
   ///
   /// In es, this message translates to:

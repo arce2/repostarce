@@ -79,6 +79,47 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeSettingsTooltip => 'Ajustes';
 
   @override
+  String get homeStatsMonthlySpendLabel => 'Gasto del mes';
+
+  @override
+  String homeStatsSavingLabel(String amount) {
+    return 'Ahorras $amount €';
+  }
+
+  @override
+  String homeStatsOverpayingLabel(String amount) {
+    return '+$amount € vs media';
+  }
+
+  @override
+  String get homeStatsLastFillUp => 'Último repostaje';
+
+  @override
+  String get homeStatsNextFillUp => 'Próximo repostaje';
+
+  @override
+  String get homeStatsNoData => 'Sin datos';
+
+  @override
+  String get homeStatsToday => 'Hoy';
+
+  @override
+  String get homeStatsYesterday => 'Ayer';
+
+  @override
+  String homeStatsDaysAgo(int days) {
+    return 'Hace $days días';
+  }
+
+  @override
+  String homeStatsDaysUntil(int days) {
+    return 'En ~$days días';
+  }
+
+  @override
+  String get homeStatsAnyDayNow => 'Cualquier día';
+
+  @override
   String get resultsTitleNearby => 'Cerca de ti';
 
   @override

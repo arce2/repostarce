@@ -105,6 +105,23 @@ class FuelPriceService {
     return all.where((s) => ids.contains(s.id)).toList();
   }
 
+  /// Precio medio nacional de cada combustible, calculado sobre todas las
+  /// gasolineras descargadas (misma caché en memoria que el resto de
+  /// consultas: no provoca una descarga aparte si ya se pidió algo hace
+  /// poco). Se usa para estimar el ahorro frente a la media en "Consumo y
+  /// gastos".
+  Future<Map<FuelType, double>> nationalAveragePrices() async {
+    final all = await _fetchAllStations();
+    final result = <FuelType, double>{};
+    for (final type in FuelType.values) {
+      final prices = all.map((s) => s.priceFor(type)).whereType<double>().toList();
+      if (prices.isNotEmpty) {
+        result[type] = prices.reduce((a, b) => a + b) / prices.length;
+      }
+    }
+    return result;
+  }
+
   /// Ordena una lista de gasolineras por precio ascendente para [type],
   /// dejando fuera las que no venden ese combustible.
   List<GasStation> sortedByPrice(List<GasStation> stations, FuelType type) {
