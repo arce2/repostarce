@@ -275,7 +275,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        elevation: 0,
         title: const Text('Gasly'),
         actions: [
           IconButton(
@@ -290,7 +294,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  24,
+                  kToolbarHeight + 8,
+                  24,
+                  24,
+                ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: IntrinsicHeight(
