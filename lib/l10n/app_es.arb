@@ -196,6 +196,11 @@
   "vehicleTypeCar": "Turismo",
   "vehicleTypeMotorcycle": "Moto",
   "vehicleTypePickup": "Pickup",
+  "vehicleTypeVan": "Furgoneta",
+  "vehiclesCategoryCar": "Coche",
+  "vehiclesFormStep1Title": "¿Qué vehículo es?",
+  "vehiclesFormModelHint": "Modelo (p. ej. Seat Ibiza)",
+  "vehiclesFormYearHint": "Año",
 
   "homeVehiclesCardTitle": "Mis vehículos",
   "homeVehiclesCardSubtitle": "Gestiona tus coches y motos, y mira cuánto gasta cada uno",

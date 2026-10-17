@@ -210,6 +210,11 @@
   "vehicleTypeCar": "Voiture",
   "vehicleTypeMotorcycle": "Moto",
   "vehicleTypePickup": "Pick-up",
+  "vehicleTypeVan": "Fourgonnette",
+  "vehiclesCategoryCar": "Voiture",
+  "vehiclesFormStep1Title": "Quel véhicule est-ce ?",
+  "vehiclesFormModelHint": "Modèle (ex. Seat Ibiza)",
+  "vehiclesFormYearHint": "Année",
 
   "homeVehiclesCardTitle": "Mes véhicules",
   "homeVehiclesCardSubtitle": "Gère tes voitures et motos, et vois ce que coûte chacune",

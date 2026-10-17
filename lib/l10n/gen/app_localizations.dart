@@ -1036,6 +1036,36 @@ abstract class AppLocalizations {
   /// **'Pickup'**
   String get vehicleTypePickup;
 
+  /// No description provided for @vehicleTypeVan.
+  ///
+  /// In es, this message translates to:
+  /// **'Furgoneta'**
+  String get vehicleTypeVan;
+
+  /// No description provided for @vehiclesCategoryCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Coche'**
+  String get vehiclesCategoryCar;
+
+  /// No description provided for @vehiclesFormStep1Title.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué vehículo es?'**
+  String get vehiclesFormStep1Title;
+
+  /// No description provided for @vehiclesFormModelHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo (p. ej. Seat Ibiza)'**
+  String get vehiclesFormModelHint;
+
+  /// No description provided for @vehiclesFormYearHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Año'**
+  String get vehiclesFormYearHint;
+
   /// No description provided for @homeVehiclesCardTitle.
   ///
   /// In es, this message translates to:

@@ -546,6 +546,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehicleTypePickup => 'Pickup';
 
   @override
+  String get vehicleTypeVan => 'Furgoneta';
+
+  @override
+  String get vehiclesCategoryCar => 'Coche';
+
+  @override
+  String get vehiclesFormStep1Title => '¿Qué vehículo es?';
+
+  @override
+  String get vehiclesFormModelHint => 'Modelo (p. ej. Seat Ibiza)';
+
+  @override
+  String get vehiclesFormYearHint => 'Año';
+
+  @override
   String get homeVehiclesCardTitle => 'Mis vehículos';
 
   @override

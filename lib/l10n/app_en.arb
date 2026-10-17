@@ -196,6 +196,11 @@
   "vehicleTypeCar": "Car",
   "vehicleTypeMotorcycle": "Motorcycle",
   "vehicleTypePickup": "Pickup",
+  "vehicleTypeVan": "Van",
+  "vehiclesCategoryCar": "Car",
+  "vehiclesFormStep1Title": "What vehicle is it?",
+  "vehiclesFormModelHint": "Model (e.g. Seat Ibiza)",
+  "vehiclesFormYearHint": "Year",
 
   "homeVehiclesCardTitle": "My vehicles",
   "homeVehiclesCardSubtitle": "Manage your cars and bikes, and see what each one costs",

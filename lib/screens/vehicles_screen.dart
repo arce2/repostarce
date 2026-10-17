@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/gen/app_localizations.dart';
 import '../l10n/l10n_x.dart';
 import '../models/fuel_log_entry.dart';
 import '../models/vehicle.dart';
@@ -90,17 +91,20 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   }
 
   Future<void> _addVehicle() async {
-    final result = await showModalBottomSheet<(String, VehicleType)>(
+    final result =
+        await showModalBottomSheet<(String, VehicleType, String, int?)>(
       context: context,
       isScrollControlled: true,
       builder: (_) => const _AddVehicleSheet(),
     );
     if (result == null) return;
-    final (name, type) = result;
+    final (name, type, model, year) = result;
     await _vehicleService.addVehicle(Vehicle(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       name: name,
       type: type,
+      model: model,
+      year: year,
     ));
     await _load();
   }
@@ -203,7 +207,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  vehicle.type.labelFor(l10n),
+                                  [
+                                    vehicle.type.labelFor(l10n),
+                                    if (vehicle.model.isNotEmpty) vehicle.model,
+                                    if (vehicle.year != null) vehicle.year.toString(),
+                                  ].join(' · '),
                                   style: TextStyle(
                                       fontSize: 12, color: colorScheme.onSurfaceVariant),
                                 ),
@@ -253,24 +261,40 @@ class _AddVehicleSheet extends StatefulWidget {
 
 class _AddVehicleSheetState extends State<_AddVehicleSheet> {
   final _nameController = TextEditingController();
-  VehicleType _type = VehicleType.car;
+  final _modelController = TextEditingController();
+  final _yearController = TextEditingController();
+
+  /// Primer paso: null = todavía sin elegir; false = coche; true = moto.
+  /// Solo al elegir "coche" se pregunta después el tipo exacto.
+  bool? _isMotorcycle;
+  VehicleType _carSubtype = VehicleType.car;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _modelController.dispose();
+    _yearController.dispose();
     super.dispose();
+  }
+
+  void _chooseCategory(bool isMotorcycle) {
+    setState(() => _isMotorcycle = isMotorcycle);
   }
 
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
-    Navigator.of(context).pop((name, _type));
+    final type = _isMotorcycle == true ? VehicleType.motorcycle : _carSubtype;
+    final year = int.tryParse(_yearController.text.trim());
+    Navigator.of(context)
+        .pop((name, type, _modelController.text.trim(), year));
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
+    final categoryChosen = _isMotorcycle != null;
 
     return SafeArea(
       child: Padding(
@@ -295,84 +319,187 @@ class _AddVehicleSheetState extends State<_AddVehicleSheet> {
                 ),
               ),
             ),
-            Text(
-              l10n.vehiclesFormAddTitle,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            if (!categoryChosen)
+              ..._buildStep1(l10n, colorScheme)
+            else
+              ..._buildStep2(l10n, colorScheme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildStep1(AppLocalizations l10n, ColorScheme colorScheme) {
+    return [
+      Text(
+        l10n.vehiclesFormStep1Title,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+      ),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: _CategoryCard(
+              icon: VehicleType.car.icon,
+              label: l10n.vehiclesCategoryCar,
+              onTap: () => _chooseCategory(false),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(hintText: l10n.vehiclesFormNameHint),
-              onSubmitted: (_) => _save(),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _CategoryCard(
+              icon: VehicleType.motorcycle.icon,
+              label: l10n.vehicleTypeMotorcycle,
+              onTap: () => _chooseCategory(true),
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.vehiclesFormTypeLabel,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 12.5,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: VehicleType.values.map((type) {
-                final selected = type == _type;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Material(
-                      color: selected
-                          ? colorScheme.primaryContainer
-                          : colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InkWell(
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _buildStep2(AppLocalizations l10n, ColorScheme colorScheme) {
+    return [
+      Row(
+        children: [
+          IconButton(
+            onPressed: () => setState(() => _isMotorcycle = null),
+            icon: const Icon(Icons.arrow_back_rounded),
+            visualDensity: VisualDensity.compact,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            l10n.vehiclesFormAddTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _nameController,
+        decoration: InputDecoration(hintText: l10n.vehiclesFormNameHint),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _modelController,
+        decoration: InputDecoration(hintText: l10n.vehiclesFormModelHint),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _yearController,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(hintText: l10n.vehiclesFormYearHint),
+      ),
+      if (_isMotorcycle == false) ...[
+        const SizedBox(height: 16),
+        Text(
+          l10n.vehiclesFormTypeLabel,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12.5,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [VehicleType.car, VehicleType.pickup, VehicleType.van]
+              .map((type) {
+            final selected = type == _carSubtype;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Material(
+                  color: selected
+                      ? colorScheme.primaryContainer
+                      : colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => setState(() => _carSubtype = type),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => setState(() => _type = type),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
+                        border: Border.all(
+                          color: selected
+                              ? colorScheme.primary
+                              : colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            type.icon,
+                            color: selected
+                                ? colorScheme.onPrimaryContainer
+                                : colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            type.labelFor(l10n),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
                               color: selected
-                                  ? colorScheme.primary
-                                  : colorScheme.outlineVariant,
+                                  ? colorScheme.onPrimaryContainer
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                type.icon,
-                                color: selected
-                                    ? colorScheme.onPrimaryContainer
-                                    : colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                type.labelFor(l10n),
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: selected
-                                      ? colorScheme.onPrimaryContainer
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _save,
-              child: Text(l10n.vehiclesFormSave),
-            ),
-          ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+      const SizedBox(height: 20),
+      FilledButton(
+        onPressed: _save,
+        child: Text(l10n.vehiclesFormSave),
+      ),
+    ];
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 36, color: colorScheme.primary),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+            ],
+          ),
         ),
       ),
     );

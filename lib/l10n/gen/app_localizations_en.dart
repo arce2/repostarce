@@ -543,6 +543,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vehicleTypePickup => 'Pickup';
 
   @override
+  String get vehicleTypeVan => 'Van';
+
+  @override
+  String get vehiclesCategoryCar => 'Car';
+
+  @override
+  String get vehiclesFormStep1Title => 'What vehicle is it?';
+
+  @override
+  String get vehiclesFormModelHint => 'Model (e.g. Seat Ibiza)';
+
+  @override
+  String get vehiclesFormYearHint => 'Year';
+
+  @override
   String get homeVehiclesCardTitle => 'My vehicles';
 
   @override
