@@ -17,6 +17,7 @@ import '../services/price_alert_service.dart';
 import '../services/price_history_service.dart';
 import '../services/vehicle_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_gradient_background.dart';
 import '../widgets/home_stats_ring.dart';
 import '../widgets/station_detail_sheet.dart';
 import '../widgets/station_list_tile.dart';
@@ -94,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _loadFavorites({bool silent = false, bool forceRefresh = false}) async {
+  Future<void> _loadFavorites(
+      {bool silent = false, bool forceRefresh = false}) async {
     if (!silent) setState(() => _loadingFavorites = true);
     try {
       if (forceRefresh) _fuelService.refresh();
@@ -283,246 +285,269 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-                      HomeStatsRing(
-                        monthlySpend: _monthlySpend,
-                        monthlySavings: _monthlySavings,
-                        lastFillUpDate: _lastFillUpDate,
-                        nextFillUpEstimate: _nextFillUpEstimate,
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        l10n.homeHeadline,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        l10n.homeSubtitle,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                      const SizedBox(height: 20),
-                      Material(
-                        color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
+      body: AnimatedGradientBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+                        HomeStatsRing(
+                          monthlySpend: _monthlySpend,
+                          monthlySavings: _monthlySavings,
+                          lastFillUpDate: _lastFillUpDate,
+                          nextFillUpEstimate: _nextFillUpEstimate,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.homeHeadline,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          l10n.homeSubtitle,
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                        ),
+                        const SizedBox(height: 20),
+                        Material(
+                          color: colorScheme.secondaryContainer
+                              .withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(16),
-                          onTap: _openFuelLog,
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: _openFuelLog,
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.receipt_long_rounded,
+                                      color: colorScheme.onSecondaryContainer),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.homeFuelLogCardTitle,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: colorScheme
+                                                .onSecondaryContainer,
+                                          ),
+                                        ),
+                                        Text(
+                                          l10n.homeFuelLogCardSubtitle,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: colorScheme
+                                                .onSecondaryContainer
+                                                .withValues(alpha: 0.85),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.chevron_right_rounded,
+                                      color: colorScheme.onSecondaryContainer),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (!_loadingFavorites) ...[
+                          const SizedBox(height: 28),
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded,
+                                  size: 18, color: AppTheme.cheapestColor),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.homeFavoritesTitle,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        if (!_loadingFavorites && _favoriteStations.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(14),
+                              border:
+                                  Border.all(color: colorScheme.outlineVariant),
+                            ),
                             child: Row(
                               children: [
-                                Icon(Icons.receipt_long_rounded,
-                                    color: colorScheme.onSecondaryContainer),
-                                const SizedBox(width: 12),
+                                Icon(Icons.star_outline_rounded,
+                                    size: 20,
+                                    color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 10),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.homeFuelLogCardTitle,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          color: colorScheme.onSecondaryContainer,
-                                        ),
-                                      ),
-                                      Text(
-                                        l10n.homeFuelLogCardSubtitle,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: colorScheme.onSecondaryContainer
-                                              .withValues(alpha: 0.85),
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    l10n.homeFavoritesEmptyHint,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ),
-                                Icon(Icons.chevron_right_rounded,
-                                    color: colorScheme.onSecondaryContainer),
                               ],
                             ),
                           ),
+                        if (!_loadingFavorites && _favoriteStations.isNotEmpty)
+                          ..._favoriteStations.map((station) {
+                            final fuelType =
+                                station.availableFuelTypes.isNotEmpty
+                                    ? station.availableFuelTypes.first
+                                    : FuelType.gasolina95;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: StationListTile(
+                                station: station,
+                                fuelType: fuelType,
+                                isCheapest: false,
+                                previousPrice:
+                                    _favoritePreviousPrices[station.id],
+                                onTap: () => _openFavoriteDetails(station),
+                              ),
+                            );
+                          }),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed:
+                              _loadingLocation ? null : _useCurrentLocation,
+                          icon: _loadingLocation
+                              ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                )
+                              : const Icon(Icons.my_location_rounded),
+                          label: Text(_loadingLocation
+                              ? l10n.homeUseLocationLoading
+                              : l10n.homeUseLocationButton),
                         ),
-                      ),
-                      if (!_loadingFavorites) ...[
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
                         Row(
                           children: [
-                            const Icon(Icons.star_rounded,
-                                size: 18, color: AppTheme.cheapestColor),
-                            const SizedBox(width: 6),
-                            Text(
-                              l10n.homeFavoritesTitle,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurfaceVariant,
+                            Expanded(
+                                child:
+                                    Divider(color: colorScheme.outlineVariant)),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                l10n.homeSearchByZoneDivider,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
+                            Expanded(
+                                child:
+                                    Divider(color: colorScheme.outlineVariant)),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                      ],
-                      if (!_loadingFavorites && _favoriteStations.isEmpty)
+                        const SizedBox(height: 20),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: colorScheme.outlineVariant),
+                            borderRadius: BorderRadius.circular(20),
+                            border:
+                                Border.all(color: colorScheme.outlineVariant),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Icon(Icons.star_outline_rounded,
-                                  size: 20, color: colorScheme.onSurfaceVariant),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  l10n.homeFavoritesEmptyHint,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: colorScheme.onSurfaceVariant,
+                              DropdownButtonFormField<Province>(
+                                initialValue: _selectedProvince,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: l10n.homeProvinceLabel,
+                                  prefixIcon: const Icon(Icons.map_outlined),
+                                ),
+                                items: Province.all
+                                    .map((p) => DropdownMenuItem(
+                                        value: p,
+                                        child: Text(p.name,
+                                            overflow: TextOverflow.ellipsis)))
+                                    .toList(),
+                                onChanged: (p) =>
+                                    setState(() => _selectedProvince = p),
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: _searchByProvince,
+                                icon: const Icon(Icons.search_rounded),
+                                label: Text(l10n.homeSearchProvinceButton),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline_rounded,
+                                    color: colorScheme.onErrorContainer,
+                                    size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _error!,
+                                    style: TextStyle(
+                                        color: colorScheme.onErrorContainer),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (!_loadingFavorites && _favoriteStations.isNotEmpty)
-                        ..._favoriteStations.map((station) {
-                          final fuelType = station.availableFuelTypes.isNotEmpty
-                              ? station.availableFuelTypes.first
-                              : FuelType.gasolina95;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: StationListTile(
-                              station: station,
-                              fuelType: fuelType,
-                              isCheapest: false,
-                              previousPrice: _favoritePreviousPrices[station.id],
-                              onTap: () => _openFavoriteDetails(station),
-                            ),
-                          );
-                        }),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: _loadingLocation ? null : _useCurrentLocation,
-                        icon: _loadingLocation
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.onPrimary,
-                                ),
-                              )
-                            : const Icon(Icons.my_location_rounded),
-                        label: Text(_loadingLocation
-                            ? l10n.homeUseLocationLoading
-                            : l10n.homeUseLocationButton),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: colorScheme.outlineVariant)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              l10n.homeSearchByZoneDivider,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.6,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              ],
                             ),
                           ),
-                          Expanded(child: Divider(color: colorScheme.outlineVariant)),
                         ],
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: colorScheme.outlineVariant),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            DropdownButtonFormField<Province>(
-                              initialValue: _selectedProvince,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: l10n.homeProvinceLabel,
-                                prefixIcon: const Icon(Icons.map_outlined),
-                              ),
-                              items: Province.all
-                                  .map((p) => DropdownMenuItem(
-                                      value: p,
-                                      child: Text(p.name,
-                                          overflow: TextOverflow.ellipsis)))
-                                  .toList(),
-                              onChanged: (p) =>
-                                  setState(() => _selectedProvince = p),
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: _searchByProvince,
-                              icon: const Icon(Icons.search_rounded),
-                              label: Text(l10n.homeSearchProvinceButton),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.error_outline_rounded,
-                                  color: colorScheme.onErrorContainer, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  _error!,
-                                  style: TextStyle(color: colorScheme.onErrorContainer),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const Spacer(),
                       ],
-                      const Spacer(),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
