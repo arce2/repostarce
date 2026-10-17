@@ -193,6 +193,24 @@
   "fuelLogDeleteVehicleTooltip": "Eliminar vehículo",
   "fuelLogCannotDeleteLastVehicle": "Tiene que quedar al menos un vehículo.",
 
+  "vehicleTypeCar": "Turismo",
+  "vehicleTypeMotorcycle": "Moto",
+  "vehicleTypePickup": "Pickup",
+
+  "homeVehiclesCardTitle": "Mis vehículos",
+  "homeVehiclesCardSubtitle": "Gestiona tus coches y motos, y mira cuánto gasta cada uno",
+  "vehiclesScreenTitle": "Mis vehículos",
+  "vehiclesScreenAddTooltip": "Añadir vehículo",
+  "vehiclesScreenActiveLabel": "Activo",
+  "vehiclesScreenSetActiveTooltip": "Usar este vehículo",
+  "vehiclesScreenStatsLine": "{count} repostajes · {liters} L · {spent} €",
+  "@vehiclesScreenStatsLine": { "placeholders": { "count": { "type": "int" }, "liters": { "type": "String" }, "spent": { "type": "String" } } },
+  "vehiclesScreenNoFillUps": "Sin repostajes todavía",
+  "vehiclesFormAddTitle": "Nuevo vehículo",
+  "vehiclesFormNameHint": "Nombre (p. ej. Mi coche)",
+  "vehiclesFormTypeLabel": "Tipo",
+  "vehiclesFormSave": "Añadir vehículo",
+
   "navEstimatedCost": "Coste estimado: {cost} €",
   "@navEstimatedCost": { "placeholders": { "cost": { "type": "String" } } },
 

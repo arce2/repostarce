@@ -25,6 +25,7 @@ import 'fuel_log_screen.dart';
 import 'navigation_screen.dart';
 import 'results_screen.dart';
 import 'settings_screen.dart';
+import 'vehicles_screen.dart';
 
 /// Pantalla de arranque: el usuario elige cómo quiere buscar gasolineras,
 /// bien con su ubicación GPS, bien eligiendo su provincia a mano. Si tiene
@@ -269,6 +270,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         .then((_) => _loadMonthlyStats());
   }
 
+  void _openVehicles() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const VehiclesScreen()))
+        .then((_) => _loadMonthlyStats());
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -363,6 +370,53 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         ),
                                         Text(
                                           l10n.homeFuelLogCardSubtitle,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: colorScheme
+                                                .onSecondaryContainer
+                                                .withValues(alpha: 0.85),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.chevron_right_rounded,
+                                      color: colorScheme.onSecondaryContainer),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Material(
+                          color: colorScheme.secondaryContainer
+                              .withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(16),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: _openVehicles,
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.directions_car_rounded,
+                                      color: colorScheme.onSecondaryContainer),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.homeVehiclesCardTitle,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: colorScheme
+                                                .onSecondaryContainer,
+                                          ),
+                                        ),
+                                        Text(
+                                          l10n.homeVehiclesCardSubtitle,
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: colorScheme

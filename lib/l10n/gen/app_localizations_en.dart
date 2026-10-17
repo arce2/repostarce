@@ -534,6 +534,54 @@ class AppLocalizationsEn extends AppLocalizations {
       'At least one vehicle must remain.';
 
   @override
+  String get vehicleTypeCar => 'Car';
+
+  @override
+  String get vehicleTypeMotorcycle => 'Motorcycle';
+
+  @override
+  String get vehicleTypePickup => 'Pickup';
+
+  @override
+  String get homeVehiclesCardTitle => 'My vehicles';
+
+  @override
+  String get homeVehiclesCardSubtitle =>
+      'Manage your cars and bikes, and see what each one costs';
+
+  @override
+  String get vehiclesScreenTitle => 'My vehicles';
+
+  @override
+  String get vehiclesScreenAddTooltip => 'Add vehicle';
+
+  @override
+  String get vehiclesScreenActiveLabel => 'Active';
+
+  @override
+  String get vehiclesScreenSetActiveTooltip => 'Use this vehicle';
+
+  @override
+  String vehiclesScreenStatsLine(int count, String liters, String spent) {
+    return '$count fill-ups · $liters L · $spent €';
+  }
+
+  @override
+  String get vehiclesScreenNoFillUps => 'No fill-ups yet';
+
+  @override
+  String get vehiclesFormAddTitle => 'New vehicle';
+
+  @override
+  String get vehiclesFormNameHint => 'Name (e.g. My car)';
+
+  @override
+  String get vehiclesFormTypeLabel => 'Type';
+
+  @override
+  String get vehiclesFormSave => 'Add vehicle';
+
+  @override
   String navEstimatedCost(String cost) {
     return 'Estimated cost: $cost €';
   }

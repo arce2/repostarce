@@ -1018,6 +1018,96 @@ abstract class AppLocalizations {
   /// **'Tiene que quedar al menos un vehículo.'**
   String get fuelLogCannotDeleteLastVehicle;
 
+  /// No description provided for @vehicleTypeCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Turismo'**
+  String get vehicleTypeCar;
+
+  /// No description provided for @vehicleTypeMotorcycle.
+  ///
+  /// In es, this message translates to:
+  /// **'Moto'**
+  String get vehicleTypeMotorcycle;
+
+  /// No description provided for @vehicleTypePickup.
+  ///
+  /// In es, this message translates to:
+  /// **'Pickup'**
+  String get vehicleTypePickup;
+
+  /// No description provided for @homeVehiclesCardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis vehículos'**
+  String get homeVehiclesCardTitle;
+
+  /// No description provided for @homeVehiclesCardSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestiona tus coches y motos, y mira cuánto gasta cada uno'**
+  String get homeVehiclesCardSubtitle;
+
+  /// No description provided for @vehiclesScreenTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis vehículos'**
+  String get vehiclesScreenTitle;
+
+  /// No description provided for @vehiclesScreenAddTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir vehículo'**
+  String get vehiclesScreenAddTooltip;
+
+  /// No description provided for @vehiclesScreenActiveLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Activo'**
+  String get vehiclesScreenActiveLabel;
+
+  /// No description provided for @vehiclesScreenSetActiveTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar este vehículo'**
+  String get vehiclesScreenSetActiveTooltip;
+
+  /// No description provided for @vehiclesScreenStatsLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} repostajes · {liters} L · {spent} €'**
+  String vehiclesScreenStatsLine(int count, String liters, String spent);
+
+  /// No description provided for @vehiclesScreenNoFillUps.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin repostajes todavía'**
+  String get vehiclesScreenNoFillUps;
+
+  /// No description provided for @vehiclesFormAddTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo vehículo'**
+  String get vehiclesFormAddTitle;
+
+  /// No description provided for @vehiclesFormNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre (p. ej. Mi coche)'**
+  String get vehiclesFormNameHint;
+
+  /// No description provided for @vehiclesFormTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get vehiclesFormTypeLabel;
+
+  /// No description provided for @vehiclesFormSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir vehículo'**
+  String get vehiclesFormSave;
+
   /// No description provided for @navEstimatedCost.
   ///
   /// In es, this message translates to:

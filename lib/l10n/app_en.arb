@@ -193,6 +193,24 @@
   "fuelLogDeleteVehicleTooltip": "Delete vehicle",
   "fuelLogCannotDeleteLastVehicle": "At least one vehicle must remain.",
 
+  "vehicleTypeCar": "Car",
+  "vehicleTypeMotorcycle": "Motorcycle",
+  "vehicleTypePickup": "Pickup",
+
+  "homeVehiclesCardTitle": "My vehicles",
+  "homeVehiclesCardSubtitle": "Manage your cars and bikes, and see what each one costs",
+  "vehiclesScreenTitle": "My vehicles",
+  "vehiclesScreenAddTooltip": "Add vehicle",
+  "vehiclesScreenActiveLabel": "Active",
+  "vehiclesScreenSetActiveTooltip": "Use this vehicle",
+  "vehiclesScreenStatsLine": "{count} fill-ups · {liters} L · {spent} €",
+  "@vehiclesScreenStatsLine": { "placeholders": { "count": { "type": "int" }, "liters": { "type": "String" }, "spent": { "type": "String" } } },
+  "vehiclesScreenNoFillUps": "No fill-ups yet",
+  "vehiclesFormAddTitle": "New vehicle",
+  "vehiclesFormNameHint": "Name (e.g. My car)",
+  "vehiclesFormTypeLabel": "Type",
+  "vehiclesFormSave": "Add vehicle",
+
   "navEstimatedCost": "Estimated cost: {cost} €",
   "@navEstimatedCost": { "placeholders": { "cost": { "type": "String" } } },
 
